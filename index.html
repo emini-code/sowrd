@@ -755,9 +755,7 @@
             quizAttempts++;
 
             if (isCorrect) {
-                let reward = 100;
-                if (currentQuiz.difficulty === 'medium') reward = 200;
-                if (currentQuiz.difficulty === 'hard') reward = 300;
+                let reward = 250;
                 
                 let mult = Math.max(1, sacrificedLevel / 10);
                 reward = reward * mult;
@@ -1138,7 +1136,7 @@
             else if (hitEffectResult === 'SUCCESS') addLog(`[성공] 탕! Lv.${currentLevel} 달성!`, 'c-s');
             else if (hitEffectResult === 'MAINTAIN') addLog(`[유지] 변화가 없습니다.`, 'c-m');
             else if (hitEffectResult === 'FAIL') addLog(`[실패] 아차! 등급이 하락했습니다. Lv.${currentLevel}`, 'c-f');
-            else if (hitEffectResult === 'DESTROY') addLog(`[파괴] 검이 산산조각 났습니다... 처음부터 다시!`, 'c-d');
+            else if (hitEffectResult === 'DESTROY') addLog(`[파괴] 검이 산산조각 났습니다...`, 'c-d');
             
             if (!isFever) {
                 if (hitEffectResult === 'MAINTAIN') {
