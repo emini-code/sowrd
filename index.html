@@ -860,6 +860,9 @@
                 }
                 selectEl.value = urlQuiz;
                 selectedQuizFile = urlQuiz;
+                // QR 링크(?quiz=...)로 접속한 경우 단원 선택 및 QR 공유 영역 숨김
+                const selectBox = document.getElementById('quiz-select-box');
+                if (selectBox) selectBox.style.display = 'none';
             } else {
                 selectedQuizFile = QUIZ_FILES[0].file;
                 selectEl.value = selectedQuizFile;
