@@ -509,16 +509,41 @@
             align-items: center;
             flex-wrap: wrap;
         }
-        #quiz-file-select {
+        #quiz-checkbox-list {
             flex: 1;
             min-width: 200px;
-            font-family: 'Noto Sans KR', sans-serif;
-            font-size: 1.15rem;
-            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: #fff;
             border: 2px solid var(--border-color);
             border-radius: 5px;
-            background: #fff;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .quiz-checkbox-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 1.05rem;
             font-weight: bold;
+            cursor: pointer;
+            padding: 5px 10px;
+            border: 2px solid var(--line-color);
+            border-radius: 5px;
+            background: #fdfbf7;
+            user-select: none;
+        }
+        .quiz-checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            margin: 0;
+        }
+        .quiz-checkbox-item:has(input:checked) {
+            border-color: var(--info);
+            background: #e8f4fd;
+            color: var(--info);
         }
         #btn-open-qr {
             font-size: 1.15rem;
@@ -611,10 +636,14 @@
 
             <!-- 퀴즈 선택 및 QR 공유 영역 -->
             <div id="quiz-select-box">
-                <label for="quiz-file-select">📚 출제할 퀴즈 단원 선택</label>
+                <label>📚 출제할 퀴즈 단원 선택 (복수 선택 가능)</label>
                 <div class="quiz-select-row">
-                    <select id="quiz-file-select" onchange="onQuizSelectChange()"></select>
-                    <button id="btn-open-qr" onclick="openQrModal()">📱 QR 공유</button>
+                    <div id="quiz-checkbox-list"></div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <button id="btn-open-qr" onclick="openQrModal()">📱 QR 공유</button>
+                        <button id="btn-local-files" onclick="document.getElementById('local-quiz-input').click()" style="display:none; font-size:0.95rem; padding:8px 12px; background:#27ae60; color:#fff; border:2px solid var(--border-color); box-shadow:2px 2px 0 var(--border-color); font-weight:bold;">📂 파일 선택</button>
+                        <input type="file" id="local-quiz-input" accept=".js" multiple style="display:none;" onchange="handleLocalQuizFiles(event)">
+                    </div>
                 </div>
                 <div id="quiz-load-status">퀴즈 데이터를 불러오는 중...</div>
             </div>
@@ -624,7 +653,7 @@
                 <ul>
                     <li><strong>강화하기:</strong> [망치질 하기!] 버튼을 눌러 50G를 소모해 검을 최대 40단계까지 강화하세요.</li>
                     <li><strong>돈벌기 &amp; 퀴즈:</strong> [돈벌기] 탭에서 과학 퀴즈를 풀면 250G(배율 적용)를 얻으며, 5연속 정답 시 랜덤 버프 또는 보너스 골드를 받습니다. 퀴즈 10문제를 맞히면 [공짜로 돈벌기]가 해금됩니다.</li>
-                    <li><strong>필수 관문:</strong> 0, 5, 10, 15, 20, 25, 30, 35단계에서는 필수 과학 문제를 통과해야 다음 단계로 강화할 수 있습니다. (기회 1회, 오답 시 1단계 하락)</li>
+                    <li><strong>필수 문제 &amp; 구간 해금:</strong> 게임 시작 시 퀴즈 파일의 필수 문제를 모두 풀면 강화가 해금됩니다. 이후 5·10단계(하), 15·20단계(중), 25단계 이상(상) 구간 해금 문제를 통과해야 다음 단계로 강화할 수 있습니다. (기회 1회, 오답 시 1단계 하락)</li>
                     <li><strong>상점 &amp; 아이템:</strong> 물약과 장비 파괴 보호권(35단계까지 파괴 확률을 유지 확률로 전환)을 구매해 전략적으로 사용하세요.</li>
                     <li><strong>희생 &amp; 보관:</strong> 11단계 이상의 검을 희생하면 퀴즈와 공짜 돈벌기 배율이 영구 증가하며, 아끼는 검은 인벤토리에 보관할 수 있습니다.</li>
                     <li><strong>피버 타임:</strong> 강화 시 '유지'가 5연속 나오면 3초간 골드 소모 없이 0.5초마다 광클 강화가 가능합니다!</li>
@@ -826,103 +855,281 @@
     </div>
 
     <script>
-        /** --- 퀴즈 파일 목록 설정 (새 JS 파일 추가 시 여기에 등록) --- */
-        const QUIZ_FILES = [
+        /** --- 기본 퀴즈 목록 (자동 탐색 불가 환경인 로컬 file:// 접속 시 폴백용) --- */
+        let QUIZ_FILES = [
             { name: "중 1 태양계", file: "중 1 태양계.js" },
             { name: "중 2 우주", file: "중 2 우주.js" }
         ];
 
-        let selectedQuizFile = QUIZ_FILES[0].file;
+        let selectedQuizFiles = [];
+        const localQuizCache = {}; // 로컬 파일 직접 선택 시 캐시
 
-        /** --- 동적 퀴즈 로드 및 QR 공유 로직 --- */
-        function initQuizSelector() {
-            const selectEl = document.getElementById('quiz-file-select');
-            selectEl.innerHTML = '';
-            QUIZ_FILES.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = item.file;
-                opt.innerText = item.name;
-                selectEl.appendChild(opt);
+        /** --- 같은 폴더 내 JS 파일 자동 탐색 (GitHub Pages API -> 디렉터리 인덱스 순) --- */
+        async function discoverQuizFiles() {
+            const excluded = new Set(['qrcode.min.js']);
+
+            // 1) GitHub Pages 환경: GitHub REST API로 같은 폴더 내 .js 파일 조회
+            if (window.location.hostname.endsWith('.github.io')) {
+                const owner = window.location.hostname.split('.')[0];
+                const rawParts = window.location.pathname.split('/').filter(Boolean);
+                if (rawParts.length > 0 && /\.(html?|php)$/i.test(rawParts[rawParts.length - 1])) {
+                    rawParts.pop();
+                }
+
+                const candidates = [];
+                if (rawParts.length > 0) {
+                    candidates.push({ repo: rawParts[0], dir: rawParts.slice(1).join('/') });
+                }
+                candidates.push({ repo: window.location.hostname, dir: rawParts.join('/') });
+
+                for (const c of candidates) {
+                    try {
+                        const apiPath = c.dir ? `/${c.dir}` : '';
+                        const res = await fetch(`https://api.github.com/repos/${owner}/${c.repo}/contents${apiPath}`);
+                        if (!res.ok) continue;
+                        const items = await res.json();
+                        if (Array.isArray(items)) {
+                            const jsFiles = items
+                                .filter(item => item.type === 'file' && /\.js$/i.test(item.name) && !excluded.has(item.name.toLowerCase()))
+                                .map(item => ({ name: item.name.replace(/\.js$/i, ''), file: item.name }));
+                            if (jsFiles.length > 0) return jsFiles;
+                        }
+                    } catch (e) { /* 다음 후보 시도 */ }
+                }
+            }
+
+            // 2) 일반 웹 서버 / 로컬 서버 환경: 현재 폴더 목록(./) HTML 파싱
+            if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+                try {
+                    const res = await fetch('./');
+                    if (res.ok) {
+                        const text = await res.text();
+                        const doc = new DOMParser().parseFromString(text, 'text/html');
+                        const links = Array.from(doc.querySelectorAll('a[href]'));
+                        const found = [];
+                        const seen = new Set();
+                        links.forEach(a => {
+                            let href = a.getAttribute('href') || '';
+                            if (/^https?:\/\//i.test(href) || href.startsWith('..') || href.startsWith('#')) return;
+                            href = href.split('?')[0].split('#')[0];
+                            if (/\.js$/i.test(href)) {
+                                const file = decodeURIComponent(href.replace(/^\.\//, '').split('/').pop());
+                                if (file && !excluded.has(file.toLowerCase()) && !seen.has(file)) {
+                                    seen.add(file);
+                                    found.push({ name: file.replace(/\.js$/i, ''), file });
+                                }
+                            }
+                        });
+                        if (found.length > 0) return found;
+                    }
+                } catch (e) { /* 폴백 */ }
+            }
+
+            return null;
+        }
+
+        function renderQuizCheckboxes(options, checkedFiles) {
+            const listEl = document.getElementById('quiz-checkbox-list');
+            listEl.innerHTML = '';
+            options.forEach(item => {
+                const label = document.createElement('label');
+                label.className = 'quiz-checkbox-item';
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.value = item.file;
+                cb.checked = checkedFiles.includes(item.file);
+                cb.onchange = onQuizSelectChange;
+                label.appendChild(cb);
+                label.appendChild(document.createTextNode(item.name));
+                listEl.appendChild(label);
             });
+        }
 
-            // URL 파라미터(?quiz=파일명) 확인
+        function handleLocalQuizFiles(event) {
+            const files = Array.from(event.target.files || []).filter(f => /\.js$/i.test(f.name));
+            if (files.length === 0) return;
+
+            let loaded = 0;
+            files.forEach(fileObj => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const code = e.target.result;
+                        const data = new Function(code + '; return typeof quizData !== "undefined" ? quizData : null;')();
+                        if (data && typeof data === 'object') {
+                            localQuizCache[fileObj.name] = data;
+                            if (!QUIZ_FILES.some(item => item.file === fileObj.name)) {
+                                QUIZ_FILES.push({ name: fileObj.name.replace(/\.js$/i, ''), file: fileObj.name });
+                            }
+                            if (!selectedQuizFiles.includes(fileObj.name)) {
+                                selectedQuizFiles.push(fileObj.name);
+                            }
+                        }
+                    } catch (err) {
+                        console.error(err);
+                    } finally {
+                        loaded++;
+                        if (loaded === files.length) {
+                            renderQuizCheckboxes(QUIZ_FILES, selectedQuizFiles);
+                            loadQuizScripts(selectedQuizFiles);
+                        }
+                    }
+                };
+                reader.readAsText(fileObj, 'utf-8');
+            });
+            event.target.value = '';
+        }
+
+        /** --- 동적 퀴즈 다중 로드 및 QR 공유 로직 --- */
+        async function initQuizSelector() {
+            const statusEl = document.getElementById('quiz-load-status');
+            statusEl.style.color = '#f39c12';
+            statusEl.innerText = '🔍 같은 폴더 내 퀴즈 파일(.js)을 탐색 중...';
+
+            // URL 파라미터(?quiz=파일1.js,파일2.js) 확인
             const params = new URLSearchParams(window.location.search);
             const urlQuiz = params.get('quiz');
 
             if (urlQuiz) {
-                // 목록에 없는 파일명이어도 직접 로드 시도 가능하도록 옵션 추가
-                const exists = QUIZ_FILES.some(item => item.file === urlQuiz);
-                if (!exists) {
-                    const opt = document.createElement('option');
-                    opt.value = urlQuiz;
-                    opt.innerText = urlQuiz.replace(/\.js$/i, '');
-                    selectEl.appendChild(opt);
-                }
-                selectEl.value = urlQuiz;
-                selectedQuizFile = urlQuiz;
-                // QR 링크(?quiz=...)로 접속한 경우 QR 공유 버튼만 숨김
                 const qrBtn = document.getElementById('btn-open-qr');
                 if (qrBtn) qrBtn.style.display = 'none';
-            } else {
-                selectedQuizFile = QUIZ_FILES[0].file;
-                selectEl.value = selectedQuizFile;
             }
 
-            loadQuizScript(selectedQuizFile);
+            // 폴더 내 .js 파일 자동 탐색
+            const discovered = await discoverQuizFiles();
+            if (discovered && discovered.length > 0) {
+                QUIZ_FILES = discovered;
+            } else if (window.location.protocol === 'file:' && !urlQuiz) {
+                // 로컬 file:// 환경에서는 브라우저 보안상 폴더 자동 스캔 불가 -> 파일 선택 버튼 표시
+                const localBtn = document.getElementById('btn-local-files');
+                if (localBtn) localBtn.style.display = 'inline-block';
+            }
+
+            let initialFiles = urlQuiz
+                ? urlQuiz.split(',').map(f => f.trim()).filter(Boolean)
+                : (QUIZ_FILES.length > 0 ? [QUIZ_FILES[0].file] : []);
+
+            // 탐색된 목록 + URL로 넘어온 파일 병합
+            const allOptions = [...QUIZ_FILES];
+            initialFiles.forEach(file => {
+                if (!allOptions.some(item => item.file === file)) {
+                    allOptions.push({ name: file.replace(/\.js$/i, ''), file });
+                }
+            });
+            QUIZ_FILES = allOptions;
+
+            renderQuizCheckboxes(QUIZ_FILES, initialFiles);
+            selectedQuizFiles = initialFiles;
+            loadQuizScripts(selectedQuizFiles);
         }
 
         function onQuizSelectChange() {
-            const selectEl = document.getElementById('quiz-file-select');
-            selectedQuizFile = selectEl.value;
-            loadQuizScript(selectedQuizFile);
+            const checked = Array.from(document.querySelectorAll('#quiz-checkbox-list input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            selectedQuizFiles = checked;
+            loadQuizScripts(selectedQuizFiles);
         }
 
-        function loadQuizScript(filename) {
+        function loadSingleScript(filename) {
+            if (localQuizCache[filename]) {
+                return Promise.resolve(localQuizCache[filename]);
+            }
+            return new Promise((resolve, reject) => {
+                const oldScript = document.getElementById('dynamic-quiz-script');
+                if (oldScript) oldScript.remove();
+                window.quizData = null;
+
+                const script = document.createElement('script');
+                script.id = 'dynamic-quiz-script';
+                script.src = encodeURI(filename);
+                script.onload = () => {
+                    if (window.quizData && typeof window.quizData === 'object') {
+                        resolve(window.quizData);
+                    } else {
+                        reject(new Error(`'${filename}' 내부에 quizData 객체가 없습니다.`));
+                    }
+                };
+                script.onerror = () => reject(new Error(`'${filename}' 파일을 찾을 수 없습니다.`));
+                document.head.appendChild(script);
+            });
+        }
+
+        async function loadQuizScripts(filenames) {
             const statusEl = document.getElementById('quiz-load-status');
             const startBtn = document.getElementById('start-game-btn');
+
+            if (!filenames || filenames.length === 0) {
+                window.quizData = null;
+                statusEl.style.color = '#c0392b';
+                statusEl.innerText = '❌ 최소 1개 이상의 단원을 선택하세요.';
+                startBtn.disabled = true;
+                return;
+            }
+
             statusEl.style.color = '#f39c12';
-            statusEl.innerText = `⏳ '${filename}' 불러오는 중...`;
+            statusEl.innerText = `⏳ ${filenames.length}개 단원 불러오는 중...`;
             startBtn.disabled = true;
 
-            // 기존 동적 스크립트 제거 및 quizData 초기화
-            const oldScript = document.getElementById('dynamic-quiz-script');
-            if (oldScript) oldScript.remove();
-            window.quizData = null;
+            const merged = { easy: [], medium: [], hard: [], required: {} };
+            const loadedNames = [];
+            const failedNames = [];
 
-            const script = document.createElement('script');
-            script.id = 'dynamic-quiz-script';
-            script.src = encodeURI(filename);
+            for (const file of filenames) {
+                try {
+                    const data = await loadSingleScript(file);
+                    if (Array.isArray(data.easy)) merged.easy.push(...data.easy);
+                    if (Array.isArray(data.medium)) merged.medium.push(...data.medium);
+                    if (Array.isArray(data.hard)) merged.hard.push(...data.hard);
 
-            script.onload = function() {
-                if (window.quizData && typeof window.quizData === 'object') {
-                    const displayName = filename.replace(/\.js$/i, '');
-                    statusEl.style.color = '#27ae60';
-                    statusEl.innerText = `✅ '${displayName}' 퀴즈 로드 완료!`;
-                    document.getElementById('active-quiz-badge').innerText = `📚 현재 단원: ${displayName}`;
-                    startBtn.disabled = false;
-                    addLog(`📚 '${displayName}' 문제 데이터를 불러왔습니다.`, "c-s");
-                } else {
-                    statusEl.style.color = '#c0392b';
-                    statusEl.innerText = `❌ '${filename}' 내부에 quizData 객체가 없습니다.`;
+                    if (data.required) {
+                        if (Array.isArray(data.required)) {
+                            if (!merged.required._list) merged.required._list = [];
+                            merged.required._list.push(...data.required.filter(q => q && q.q));
+                        } else if (typeof data.required === 'object') {
+                            Object.keys(data.required).forEach(k => {
+                                if (!merged.required[k]) merged.required[k] = [];
+                                const val = data.required[k];
+                                if (Array.isArray(val)) merged.required[k].push(...val.filter(q => q && q.q));
+                                else if (val && val.q) merged.required[k].push(val);
+                            });
+                        }
+                    }
+                    loadedNames.push(file.replace(/\.js$/i, ''));
+                } catch (err) {
+                    failedNames.push(file);
                 }
-            };
+            }
 
-            script.onerror = function() {
+            if (loadedNames.length > 0) {
+                window.quizData = merged;
+                const labelText = loadedNames.join(', ');
+                statusEl.style.color = failedNames.length > 0 ? '#f39c12' : '#27ae60';
+                statusEl.innerText = failedNames.length > 0
+                    ? `⚠️ '${labelText}' 로드 완료 (실패: ${failedNames.join(', ')})`
+                    : `✅ '${labelText}' 퀴즈 로드 완료!`;
+                document.getElementById('active-quiz-badge').innerText = `📚 현재 단원: ${labelText}`;
+                startBtn.disabled = false;
+                if (typeof updateTierLockUI === 'function') updateTierLockUI();
+                addLog(`📚 [${labelText}] 문제 데이터를 불러왔습니다.`, "c-s");
+            } else {
+                window.quizData = null;
                 statusEl.style.color = '#c0392b';
-                statusEl.innerText = `❌ '${filename}' 파일을 찾을 수 없습니다. (같은 폴더에 있는지 확인하세요)`;
-            };
-
-            document.head.appendChild(script);
+                statusEl.innerText = `❌ 선택한 파일을 찾을 수 없습니다. (${failedNames.join(', ')})`;
+            }
         }
 
         function getShareUrl() {
             const baseUrl = window.location.origin + window.location.pathname;
-            return `${baseUrl}?quiz=${encodeURIComponent(selectedQuizFile)}`;
+            return `${baseUrl}?quiz=${encodeURIComponent(selectedQuizFiles.join(','))}`;
         }
 
         function openQrModal() {
+            if (selectedQuizFiles.length === 0) {
+                alert("공유할 단원을 최소 1개 이상 선택하세요.");
+                return;
+            }
             const shareUrl = getShareUrl();
-            const displayName = selectedQuizFile.replace(/\.js$/i, '');
+            const displayName = selectedQuizFiles.map(f => f.replace(/\.js$/i, '')).join(', ');
             document.getElementById('qr-modal-title').innerText = `📱 [${displayName}] QR 공유`;
             document.getElementById('qr-url-text').innerText = shareUrl;
 
@@ -961,6 +1168,7 @@
         let sacrificedLevel = 0;
         let totalCorrectAnswers = 0;
         let unlockedTiers = new Set();
+        let solvedRequiredQs = new Set();
         const TIER_GATES = [
             { cap: 0, unlockLevel: 0, name: "0단계 필수 관문" },
             { cap: 5, unlockLevel: 5, name: "5단계 필수 관문" },
@@ -1022,7 +1230,8 @@
                 sacrificedLevel,
                 totalCorrectAnswers,
                 recentQuestions,
-                unlockedTiers: Array.from(unlockedTiers)
+                unlockedTiers: Array.from(unlockedTiers),
+                solvedRequiredQs: Array.from(solvedRequiredQs)
             };
         };
 
@@ -1036,6 +1245,7 @@
             totalCorrectAnswers = state.totalCorrectAnswers ?? 0;
             recentQuestions = state.recentQuestions ?? [];
             unlockedTiers = new Set(state.unlockedTiers ?? []);
+            solvedRequiredQs = new Set(state.solvedRequiredQs ?? []);
             updateGoldUI();
             updateItemUI();
             updateProbUI();
@@ -1056,17 +1266,74 @@
         let quizAttempts = 0;
         let recentQuestions = [];
 
+        function getAllRequiredQuestions() {
+            const list = [];
+            const seen = new Set();
+            if (!window.quizData || !window.quizData.required) return list;
+            const req = window.quizData.required;
+
+            const pushQ = (q) => {
+                if (q && q.q && !seen.has(q.q)) {
+                    seen.add(q.q);
+                    list.push({ ...q, difficulty: q.c1 ? 'medium' : 'easy' });
+                }
+            };
+
+            if (Array.isArray(req)) {
+                req.forEach(pushQ);
+            } else if (typeof req === 'object') {
+                Object.keys(req).forEach(k => {
+                    const val = req[k];
+                    if (Array.isArray(val)) val.forEach(pushQ);
+                    else pushQ(val);
+                });
+            }
+            return list;
+        }
+
+        function getGateDifficulty(cap) {
+            if (cap === 5 || cap === 10) return { key: 'easy', label: '난이도 하' };
+            if (cap === 15 || cap === 20) return { key: 'medium', label: '난이도 중' };
+            return { key: 'hard', label: '난이도 상' };
+        }
+
         function getLockedGate(level) {
-            return TIER_GATES.find(g => level === g.cap && !unlockedTiers.has(g.unlockLevel)) || null;
+            const gate = TIER_GATES.find(g => level === g.cap && !unlockedTiers.has(g.unlockLevel)) || null;
+            if (gate && gate.cap === 0) {
+                const allReq = getAllRequiredQuestions();
+                if (allReq.length === 0) {
+                    // 퀴즈 파일에 필수 문제가 없으면 0단계 자동 해금
+                    return null;
+                }
+                const remaining = allReq.filter(q => !solvedRequiredQs.has(q.q));
+                if (remaining.length === 0) {
+                    unlockedTiers.add(0);
+                    return null;
+                }
+            }
+            return gate;
         }
 
         function updateTierLockUI() {
             const overlay = document.getElementById('tier-lock-overlay');
+            const titleEl = document.getElementById('tier-lock-title');
             const msgEl = document.getElementById('tier-lock-msg');
+            const btnEl = document.getElementById('btn-required-quiz');
             const gate = getLockedGate(currentLevel);
 
             if (gate) {
-                msgEl.innerHTML = `${gate.cap}단계에서 다음 단계로<br>강화하기 위해서는<br>필수 문제를 풀어야만 넘어갈 수 있습니다!`;
+                if (gate.cap === 0) {
+                    const allReq = getAllRequiredQuestions();
+                    const solvedCount = allReq.filter(q => solvedRequiredQs.has(q.q)).length;
+                    titleEl.innerText = '강화 화면 잠금';
+                    msgEl.innerHTML = `게임을 시작하려면<br>필수 문제를 모두 풀어야 합니다!<br><span style="color:#2980b9; font-size:1.1rem;">(진행도: ${solvedCount} / ${allReq.length}문제)</span>`;
+                    btnEl.innerText = '📝 필수 문제 풀기';
+                } else {
+                    const diff = getGateDifficulty(gate.cap);
+                    titleEl.innerText = '다음 강화 구간 잠금';
+                    msgEl.innerHTML = `${gate.cap}단계에서 다음 단계로<br>강화하기 위해서는<br><strong>${diff.label}</strong> 문제를 풀어야 넘어갈 수 있습니다!`;
+                    btnEl.innerText = `📝 구간 해금 문제 (${diff.label})`;
+                }
                 overlay.style.display = 'flex';
                 btnEnhance.disabled = true;
             } else {
@@ -1097,7 +1364,14 @@
             }
             isRequiredQuiz = true;
             pendingUnlockTier = gate;
-            document.getElementById('quiz-title').innerText = `🔒 필수 문제 (${gate.cap}단계)`;
+            if (gate.cap === 0) {
+                const allReq = getAllRequiredQuestions();
+                const solvedCount = allReq.filter(q => solvedRequiredQs.has(q.q)).length;
+                document.getElementById('quiz-title').innerText = `🔒 필수 문제 (${solvedCount + 1}/${allReq.length})`;
+            } else {
+                const diff = getGateDifficulty(gate.cap);
+                document.getElementById('quiz-title').innerText = `🔒 ${gate.cap}단계 해금 (${diff.label})`;
+            }
             const infoMsg = document.getElementById('quiz-info-msg');
             infoMsg.innerText = '※ 필수 문제는 단 한 번의 기회만 주어지며, 틀리면 강화 단계가 1단계 하락합니다.';
             infoMsg.style.display = 'block';
@@ -1145,10 +1419,36 @@
                 addQuestions(window.quizData);
             }
 
-            if (isRequiredQuiz && requiredQs.length > 0) {
-                const randIdx = Math.floor(Math.random() * requiredQs.length);
-                currentQuiz = requiredQs[randIdx];
-                quizAttempts = 0;
+            if (isRequiredQuiz && pendingUnlockTier) {
+                if (pendingUnlockTier.cap === 0) {
+                    const allReq = getAllRequiredQuestions();
+                    const unsolvedReq = allReq.filter(q => !solvedRequiredQs.has(q.q));
+                    if (unsolvedReq.length === 0) {
+                        unlockedTiers.add(0);
+                        closeQuiz();
+                        return;
+                    }
+                    const solvedCount = allReq.length - unsolvedReq.length;
+                    document.getElementById('quiz-title').innerText = `🔒 필수 문제 (${solvedCount + 1}/${allReq.length})`;
+                    currentQuiz = unsolvedReq[0];
+                    quizAttempts = 0;
+                } else {
+                    const diff = getGateDifficulty(pendingUnlockTier.cap);
+                    let diffPool = allQs.filter(q => q.difficulty === diff.key);
+                    if (diffPool.length === 0) diffPool = allQs;
+                    if (diffPool.length === 0) {
+                        addLog("문제 데이터가 없습니다. 파일을 확인해주세요!", "c-d");
+                        closeQuiz();
+                        return;
+                    }
+                    let availableQs = diffPool.filter(q => !recentQuestions.includes(q.q));
+                    if (availableQs.length === 0) availableQs = diffPool;
+                    const randIdx = Math.floor(Math.random() * availableQs.length);
+                    currentQuiz = availableQs[randIdx];
+                    quizAttempts = 0;
+                    recentQuestions.push(currentQuiz.q);
+                    if (recentQuestions.length > 10) recentQuestions.shift();
+                }
             } else {
                 if (allQs.length === 0) {
                     addLog("문제 데이터가 없습니다. 파일을 확인해주세요!", "c-d");
@@ -1314,10 +1614,29 @@
 
                 if (isRequiredQuiz && pendingUnlockTier) {
                     document.getElementById('quiz-info-msg').style.display = 'none';
-                    unlockedTiers.add(pendingUnlockTier.unlockLevel);
-                    addLog(`🔓 [해금] 필수 문제를 해결하여 ${pendingUnlockTier.name}이(가) 해금되었습니다!`, "c-s");
-                    resultMsg.innerHTML = `정답입니다! (+${reward}G)<br>🔓 ${pendingUnlockTier.name}이(가) 해금되었습니다!`;
-                    successActions.innerHTML = `<button class="quiz-btn" onclick="closeQuiz()" style="background:#27ae60; color:white; margin:0; flex:1;">검 강화하러 가기</button>`;
+                    if (pendingUnlockTier.cap === 0) {
+                        solvedRequiredQs.add(currentQuiz.q);
+                        const allReq = getAllRequiredQuestions();
+                        const remaining = allReq.filter(q => !solvedRequiredQs.has(q.q));
+                        if (remaining.length > 0) {
+                            addLog(`✅ [필수 문제 통과] 남은 필수 문제: ${remaining.length}개`, "c-s");
+                            resultMsg.innerHTML = `정답입니다! (+${reward}G)<br>남은 필수 문제: <strong>${remaining.length}개</strong>`;
+                            successActions.innerHTML = `
+                                <button class="quiz-btn" onclick="startRandomQuiz()" style="background:#27ae60; color:white; margin:0; flex:1;">다음 필수 문제 풀기</button>
+                                <button class="quiz-btn" onclick="closeQuiz()" style="background:#e74c3c; color:white; margin:0; flex:1;">닫기</button>
+                            `;
+                        } else {
+                            unlockedTiers.add(0);
+                            addLog(`🔓 [해금] 모든 필수 문제를 해결하여 강화 화면이 해금되었습니다!`, "c-s");
+                            resultMsg.innerHTML = `정답입니다! (+${reward}G)<br>🔓 모든 필수 문제를 해결하여 강화가 해금되었습니다!`;
+                            successActions.innerHTML = `<button class="quiz-btn" onclick="closeQuiz()" style="background:#27ae60; color:white; margin:0; flex:1;">검 강화하러 가기</button>`;
+                        }
+                    } else {
+                        unlockedTiers.add(pendingUnlockTier.unlockLevel);
+                        addLog(`🔓 [해금] ${pendingUnlockTier.cap}단계 구간 해금 문제를 통과했습니다!`, "c-s");
+                        resultMsg.innerHTML = `정답입니다! (+${reward}G)<br>🔓 ${pendingUnlockTier.cap}단계 구간이 해금되었습니다!`;
+                        successActions.innerHTML = `<button class="quiz-btn" onclick="closeQuiz()" style="background:#27ae60; color:white; margin:0; flex:1;">검 강화하러 가기</button>`;
+                    }
                     updateTierLockUI();
                 } else {
                     resultMsg.innerText = `정답입니다! (+${reward}G)`;
