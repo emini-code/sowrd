@@ -1388,7 +1388,9 @@
                 document.getElementById('quiz-title').innerText = `🔒 ${gate.cap}단계 해금 (${diff.label})`;
             }
             const infoMsg = document.getElementById('quiz-info-msg');
-            infoMsg.innerText = '※ 필수 문제는 단 한 번의 기회만 주어지며, 틀리면 강화 단계가 1단계 하락합니다.';
+            infoMsg.innerText = gate.cap === 0
+                ? '※ 필수 문제는 틀리면 1번 문제부터 처음부터 다시 풀어야 합니다. 모두 맞히면 500G를 획득합니다!'
+                : '※ 구간 해금 문제는 단 한 번의 기회만 주어지며, 틀리면 강화 단계가 1단계 하락합니다.';
             infoMsg.style.display = 'block';
             document.getElementById('quiz-streak').style.display = 'none';
             document.getElementById('quiz-modal').style.display = 'flex';
@@ -1646,10 +1648,10 @@
                             `;
                         } else {
                             unlockedTiers.add(0);
-                            gold += 250;
+                            gold += 500;
                             updateGoldUI();
-                            addLog(`🔓 [해금] 모든 필수 문제를 해결하여 강화 화면이 해금되고 250G를 획득했습니다!`, "c-s");
-                            resultMsg.innerHTML = `정답입니다!<br>🔓 모든 필수 문제를 해결하여 강화가 해금되었습니다! (+250G)`;
+                            addLog(`🔓 [해금] 모든 필수 문제를 해결하여 강화 화면이 해금되고 500G를 획득했습니다!`, "c-s");
+                            resultMsg.innerHTML = `정답입니다!<br>🔓 모든 필수 문제를 해결하여 강화가 해금되었습니다! (+500G)`;
                             successActions.innerHTML = `<button class="quiz-btn" onclick="closeQuiz()" style="background:#27ae60; color:white; margin:0; flex:1;">검 강화하러 가기</button>`;
                         }
                     } else {
@@ -1671,13 +1673,22 @@
                 triggerAutoSave();
             } else {
                 if (isRequiredQuiz) {
-                    currentLevel = Math.max(0, currentLevel - 1);
-                    addLog(`[필수 문제 오답] 필수 문제를 틀려 강화 단계가 하락했습니다. (현재 Lv.${currentLevel})`, "c-d");
-                    document.getElementById('custom-alert-message').innerText = `필수 문제를 틀려 강화 단계가 하락했습니다.\n(현재 Lv.${currentLevel})`;
-                    document.getElementById('custom-alert-modal').style.display = 'flex';
-                    updateProbUI();
-                    closeQuiz();
-                    triggerAutoSave();
+                    if (pendingUnlockTier && pendingUnlockTier.cap === 0) {
+                        solvedRequiredQs.clear();
+                        addLog(`[필수 문제 오답] 필수 문제를 틀려 1번 문제부터 다시 풀어야 합니다.`, "c-d");
+                        document.getElementById('custom-alert-message').innerText = `필수 문제를 틀렸습니다!\n1번 문제부터 처음부터 다시 풀어주세요.`;
+                        document.getElementById('custom-alert-modal').style.display = 'flex';
+                        closeQuiz();
+                        triggerAutoSave();
+                    } else {
+                        currentLevel = Math.max(0, currentLevel - 1);
+                        addLog(`[구간 해금 오답] 문제를 틀려 강화 단계가 하락했습니다. (현재 Lv.${currentLevel})`, "c-d");
+                        document.getElementById('custom-alert-message').innerText = `구간 해금 문제를 틀려 강화 단계가 하락했습니다.\n(현재 Lv.${currentLevel})`;
+                        document.getElementById('custom-alert-modal').style.display = 'flex';
+                        updateProbUI();
+                        closeQuiz();
+                        triggerAutoSave();
+                    }
                 } else if (quizAttempts === 1) {
                     addLog(`[오답] 틀렸습니다! 한 번의 기회가 더 남았습니다.`, "c-f");
                     document.getElementById('quiz-question').innerHTML = `<span style="color:#e74c3c;">[오답! 마지막 기회입니다]</span><br>Q. ${currentQuiz.q}`;
