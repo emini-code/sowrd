@@ -794,7 +794,7 @@
             </div>
 
             <div style="text-align: center; margin-bottom: 15px; background: #fff; border: 2px solid var(--border-color); padding: 10px; border-radius: 5px; box-shadow: 2px 2px 0 rgba(0,0,0,0.1);">
-                <div id="gold-display" style="margin-top: 0; font-size: 2.2rem;">보유 골드: 250.0 G</div>
+                <div id="gold-display" style="margin-top: 0; font-size: 2.2rem;">보유 골드: 0.0 G</div>
             </div>
 
             <div>
@@ -855,12 +855,8 @@
     </div>
 
     <script>
-        /** --- 기본 퀴즈 목록 (자동 탐색 불가 환경인 로컬 file:// 접속 시 폴백용) --- */
-        let QUIZ_FILES = [
-            { name: "중 1 태양계", file: "중 1 태양계.js" },
-            { name: "중 2 우주", file: "중 2 우주.js" }
-        ];
-
+        /** --- 자동 탐색된 퀴즈 파일 목록 --- */
+        let QUIZ_FILES = [];
         let selectedQuizFiles = [];
         const localQuizCache = {}; // 로컬 파일 직접 선택 시 캐시
 
@@ -871,7 +867,12 @@
             // 1) GitHub Pages 환경: GitHub REST API로 같은 폴더 내 .js 파일 조회
             if (window.location.hostname.endsWith('.github.io')) {
                 const owner = window.location.hostname.split('.')[0];
-                const rawParts = window.location.pathname.split('/').filter(Boolean);
+                const rawParts = window.location.pathname
+                    .split('/')
+                    .filter(Boolean)
+                    .map(p => {
+                        try { return decodeURIComponent(p); } catch (e) { return p; }
+                    });
                 if (rawParts.length > 0 && /\.(html?|php)$/i.test(rawParts[rawParts.length - 1])) {
                     rawParts.pop();
                 }
@@ -883,25 +884,31 @@
                 candidates.push({ repo: window.location.hostname, dir: rawParts.join('/') });
 
                 for (const c of candidates) {
-                    try {
-                        const apiPath = c.dir ? `/${c.dir}` : '';
-                        const res = await fetch(`https://api.github.com/repos/${owner}/${c.repo}/contents${apiPath}`);
-                        if (!res.ok) continue;
-                        const items = await res.json();
-                        if (Array.isArray(items)) {
-                            const jsFiles = items
-                                .filter(item => item.type === 'file' && /\.js$/i.test(item.name) && !excluded.has(item.name.toLowerCase()))
-                                .map(item => ({ name: item.name.replace(/\.js$/i, ''), file: item.name }));
-                            if (jsFiles.length > 0) return jsFiles;
-                        }
-                    } catch (e) { /* 다음 후보 시도 */ }
+                    const encodedDir = c.dir ? '/' + c.dir.split('/').map(encodeURIComponent).join('/') : '';
+                    const urls = [
+                        `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(c.repo)}/contents${encodedDir}`,
+                        `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(c.repo)}/contents${encodedDir}?ref=gh-pages`
+                    ];
+                    for (const apiUrl of urls) {
+                        try {
+                            const res = await fetch(apiUrl, { cache: 'no-store' });
+                            if (!res.ok) continue;
+                            const items = await res.json();
+                            if (Array.isArray(items)) {
+                                const jsFiles = items
+                                    .filter(item => item.type === 'file' && /\.js$/i.test(item.name) && !excluded.has(item.name.toLowerCase()))
+                                    .map(item => ({ name: item.name.replace(/\.js$/i, ''), file: item.name }));
+                                if (jsFiles.length > 0) return jsFiles;
+                            }
+                        } catch (e) { /* 다음 후보 시도 */ }
+                    }
                 }
             }
 
             // 2) 일반 웹 서버 / 로컬 서버 환경: 현재 폴더 목록(./) HTML 파싱
             if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
                 try {
-                    const res = await fetch('./');
+                    const res = await fetch('./', { cache: 'no-store' });
                     if (res.ok) {
                         const text = await res.text();
                         const doc = new DOMParser().parseFromString(text, 'text/html');
@@ -931,6 +938,10 @@
         function renderQuizCheckboxes(options, checkedFiles) {
             const listEl = document.getElementById('quiz-checkbox-list');
             listEl.innerHTML = '';
+            if (options.length === 0) {
+                listEl.innerHTML = '<span style="color:#7f8c8d; font-size:0.95rem;">표시할 퀴즈 파일이 없습니다. [📂 파일 선택]으로 .js 파일을 불러오세요.</span>';
+                return;
+            }
             options.forEach(item => {
                 const label = document.createElement('label');
                 label.className = 'quiz-checkbox-item';
@@ -993,34 +1004,35 @@
             if (urlQuiz) {
                 const qrBtn = document.getElementById('btn-open-qr');
                 if (qrBtn) qrBtn.style.display = 'none';
+                const initialFiles = urlQuiz.split(',').map(f => f.trim()).filter(Boolean);
+                QUIZ_FILES = initialFiles.map(file => ({ name: file.replace(/\.js$/i, ''), file }));
+                renderQuizCheckboxes(QUIZ_FILES, initialFiles);
+                selectedQuizFiles = initialFiles;
+                loadQuizScripts(selectedQuizFiles);
+                return;
             }
 
-            // 폴더 내 .js 파일 자동 탐색
+            // 기본 주소(교사용) 접속 시 같은 폴더 내 .js 파일 자동 탐색
             const discovered = await discoverQuizFiles();
             if (discovered && discovered.length > 0) {
                 QUIZ_FILES = discovered;
-            } else if (window.location.protocol === 'file:' && !urlQuiz) {
-                // 로컬 file:// 환경에서는 브라우저 보안상 폴더 자동 스캔 불가 -> 파일 선택 버튼 표시
+                const initialFiles = [QUIZ_FILES[0].file];
+                renderQuizCheckboxes(QUIZ_FILES, initialFiles);
+                selectedQuizFiles = initialFiles;
+                loadQuizScripts(selectedQuizFiles);
+            } else {
+                // 자동 탐색 불가(로컬 file:// 또는 비공개 저장소 등) -> 파일 선택 버튼 표시
                 const localBtn = document.getElementById('btn-local-files');
                 if (localBtn) localBtn.style.display = 'inline-block';
+                QUIZ_FILES = [];
+                selectedQuizFiles = [];
+                renderQuizCheckboxes(QUIZ_FILES, selectedQuizFiles);
+                statusEl.style.color = '#e67e22';
+                statusEl.innerText = window.location.protocol === 'file:'
+                    ? 'ℹ️ 로컬 파일 실행 시 브라우저 보안상 자동 탐색이 제한됩니다. [📂 파일 선택]을 눌러 .js 파일을 불러오세요.'
+                    : '⚠️ 폴더 내 .js 파일을 자동으로 찾지 못했습니다. (GitHub 공개 저장소 여부 확인 또는 [📂 파일 선택] 이용)';
+                document.getElementById('start-game-btn').disabled = true;
             }
-
-            let initialFiles = urlQuiz
-                ? urlQuiz.split(',').map(f => f.trim()).filter(Boolean)
-                : (QUIZ_FILES.length > 0 ? [QUIZ_FILES[0].file] : []);
-
-            // 탐색된 목록 + URL로 넘어온 파일 병합
-            const allOptions = [...QUIZ_FILES];
-            initialFiles.forEach(file => {
-                if (!allOptions.some(item => item.file === file)) {
-                    allOptions.push({ name: file.replace(/\.js$/i, ''), file });
-                }
-            });
-            QUIZ_FILES = allOptions;
-
-            renderQuizCheckboxes(QUIZ_FILES, initialFiles);
-            selectedQuizFiles = initialFiles;
-            loadQuizScripts(selectedQuizFiles);
         }
 
         function onQuizSelectChange() {
@@ -1041,7 +1053,7 @@
 
                 const script = document.createElement('script');
                 script.id = 'dynamic-quiz-script';
-                script.src = encodeURI(filename);
+                script.src = encodeURI(filename) + '?v=' + Date.now();
                 script.onload = () => {
                     if (window.quizData && typeof window.quizData === 'object') {
                         resolve(window.quizData);
@@ -1162,7 +1174,7 @@
 
         /** --- GAME STATE --- */
         let currentLevel = 0;
-        let gold = 250;
+        let gold = 0;
         let inventory = [null, null, null];
         let unlockedLevels = new Set([0]);
         let sacrificedLevel = 0;
@@ -1237,7 +1249,7 @@
 
         window.applyLoadedState = function(state) {
             currentLevel = state.currentLevel ?? 0;
-            gold = state.gold ?? 250;
+            gold = state.gold ?? 0;
             inventory = state.inventory ?? [null, null, null];
             unlockedLevels = new Set(state.unlockedLevels ?? [0]);
             items = state.items ?? { success: 3, fail: 3, protect: 3 };
@@ -1568,8 +1580,12 @@
                 let reward = 250;
                 let mult = Math.max(1, sacrificedLevel / 10);
                 reward = Math.round(reward * mult * 10) / 10;
-                gold += reward;
-                updateGoldUI();
+                const isInitialRequired = isRequiredQuiz && pendingUnlockTier && pendingUnlockTier.cap === 0;
+                
+                if (!isInitialRequired) {
+                    gold += reward;
+                    updateGoldUI();
+                }
                 
                 if (!isRequiredQuiz) {
                     totalCorrectAnswers++;
@@ -1599,8 +1615,8 @@
                         updateProbUI();
                     }
                     addLog(msg, "c-info");
-                } else {
-                    addLog(`[필수 문제 정답] +${reward.toFixed(1)}G!`, "c-info");
+                } else if (!isInitialRequired) {
+                    addLog(`[구간 해금 정답] +${reward.toFixed(1)}G!`, "c-info");
                 }
 
                 document.getElementById('quiz-input-area').style.display = 'none';
@@ -1620,15 +1636,17 @@
                         const remaining = allReq.filter(q => !solvedRequiredQs.has(q.q));
                         if (remaining.length > 0) {
                             addLog(`✅ [필수 문제 통과] 남은 필수 문제: ${remaining.length}개`, "c-s");
-                            resultMsg.innerHTML = `정답입니다! (+${reward}G)<br>남은 필수 문제: <strong>${remaining.length}개</strong>`;
+                            resultMsg.innerHTML = `정답입니다!<br>남은 필수 문제: <strong>${remaining.length}개</strong>`;
                             successActions.innerHTML = `
                                 <button class="quiz-btn" onclick="startRandomQuiz()" style="background:#27ae60; color:white; margin:0; flex:1;">다음 필수 문제 풀기</button>
                                 <button class="quiz-btn" onclick="closeQuiz()" style="background:#e74c3c; color:white; margin:0; flex:1;">닫기</button>
                             `;
                         } else {
                             unlockedTiers.add(0);
-                            addLog(`🔓 [해금] 모든 필수 문제를 해결하여 강화 화면이 해금되었습니다!`, "c-s");
-                            resultMsg.innerHTML = `정답입니다! (+${reward}G)<br>🔓 모든 필수 문제를 해결하여 강화가 해금되었습니다!`;
+                            gold += 250;
+                            updateGoldUI();
+                            addLog(`🔓 [해금] 모든 필수 문제를 해결하여 강화 화면이 해금되고 250G를 획득했습니다!`, "c-s");
+                            resultMsg.innerHTML = `정답입니다!<br>🔓 모든 필수 문제를 해결하여 강화가 해금되었습니다! (+250G)`;
                             successActions.innerHTML = `<button class="quiz-btn" onclick="closeQuiz()" style="background:#27ae60; color:white; margin:0; flex:1;">검 강화하러 가기</button>`;
                         }
                     } else {
