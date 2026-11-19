@@ -512,31 +512,34 @@
         #quiz-checkbox-list {
             flex: 1;
             min-width: 200px;
+            max-height: 115px;
+            overflow-y: auto;
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            align-content: flex-start;
+            gap: 6px;
             background: #fff;
             border: 2px solid var(--border-color);
             border-radius: 5px;
-            padding: 10px;
+            padding: 8px;
             box-sizing: border-box;
         }
         .quiz-checkbox-item {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            font-size: 1.05rem;
+            gap: 5px;
+            font-size: 0.92rem;
             font-weight: bold;
             cursor: pointer;
-            padding: 5px 10px;
+            padding: 4px 8px;
             border: 2px solid var(--line-color);
             border-radius: 5px;
             background: #fdfbf7;
             user-select: none;
         }
         .quiz-checkbox-item input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
+            width: 15px;
+            height: 15px;
             cursor: pointer;
             margin: 0;
         }
@@ -1002,11 +1005,11 @@
             const urlQuiz = params.get('quiz');
 
             if (urlQuiz) {
-                const qrBtn = document.getElementById('btn-open-qr');
-                if (qrBtn) qrBtn.style.display = 'none';
+                // QR 링크(?quiz=...)로 접속한 학생용 화면에서는 단원 선택 영역 전체 숨김
+                const selectBox = document.getElementById('quiz-select-box');
+                if (selectBox) selectBox.style.display = 'none';
                 const initialFiles = urlQuiz.split(',').map(f => f.trim()).filter(Boolean);
                 QUIZ_FILES = initialFiles.map(file => ({ name: file.replace(/\.js$/i, ''), file }));
-                renderQuizCheckboxes(QUIZ_FILES, initialFiles);
                 selectedQuizFiles = initialFiles;
                 loadQuizScripts(selectedQuizFiles);
                 return;
