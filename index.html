@@ -199,15 +199,40 @@
         }
 
         /* Shop */
-        .shop-btn {
-            flex: 1;
-            font-size: 1.3rem;
-            padding: 10px 4px;
+        .shop-item-card {
             background: #fff;
             border: 2px solid var(--border-color);
-            box-shadow: none;
+            border-radius: 5px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
-        .shop-btn:hover { background: #f0f0f0; }
+        .shop-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.15rem;
+            font-weight: bold;
+        }
+        .shop-item-price {
+            color: #e67e22;
+            font-size: 1.05rem;
+        }
+        .shop-buy-row {
+            display: flex;
+            gap: 6px;
+        }
+        .shop-btn {
+            flex: 1;
+            font-size: 1.05rem;
+            padding: 7px 4px;
+            background: #fdfbf7;
+            border: 2px solid var(--border-color);
+            box-shadow: none;
+            font-weight: bold;
+        }
+        .shop-btn:hover { background: #f1c40f; }
 
         #log-container {
             width: 100%;
@@ -701,7 +726,6 @@
             <div class="btn-group">
                 <button onclick="saveToInventory()">인벤토리에 보관</button>
                 <button onclick="openDictionary()">도감 보기</button>
-                <button onclick="openQrModal()" style="background:#eef5fb;">📱 QR 공유</button>
             </div>
             
             <!-- Inventory -->
@@ -750,18 +774,50 @@
                     <button id="tab-shop" onclick="switchTab('shop')" style="flex:1; font-size:1.5rem; background:#eee; border:3px solid #333; border-left:none; border-radius:0 5px 5px 0; cursor:pointer; padding:5px; font-weight:normal;">상점</button>
                 </div>
 
-                <div id="content-shop" style="display:none; gap:5px; margin-bottom: 15px;">
-                    <button class="shop-btn" onclick="buyItem('success', 200)">성공 확률 증가<br>(200G)</button>
-                    <button class="shop-btn" onclick="buyItem('fail', 200)">실패 확률 감소<br>(200G)</button>
-                    <button class="shop-btn" onclick="buyItem('protect', 5000)">장비 파괴 보호권 (~35단계)<br>(5000G)</button>
+                <div id="content-shop" style="display:none; flex-direction:column; gap:10px; margin-bottom: 15px;">
+                    <div class="shop-item-card">
+                        <div class="shop-item-header">
+                            <span>성공 확률 증가</span>
+                            <span class="shop-item-price">개당 200G</span>
+                        </div>
+                        <div class="shop-buy-row">
+                            <button class="shop-btn" onclick="buyItem('success', 200, 1)">1개 구매</button>
+                            <button class="shop-btn" onclick="buyItem('success', 200, 5)">5개 구매</button>
+                            <button class="shop-btn" onclick="buyItem('success', 200, 10)">10개 구매</button>
+                        </div>
+                    </div>
+                    <div class="shop-item-card">
+                        <div class="shop-item-header">
+                            <span>실패 확률 감소</span>
+                            <span class="shop-item-price">개당 200G</span>
+                        </div>
+                        <div class="shop-buy-row">
+                            <button class="shop-btn" onclick="buyItem('fail', 200, 1)">1개 구매</button>
+                            <button class="shop-btn" onclick="buyItem('fail', 200, 5)">5개 구매</button>
+                            <button class="shop-btn" onclick="buyItem('fail', 200, 10)">10개 구매</button>
+                        </div>
+                    </div>
+                    <div class="shop-item-card">
+                        <div class="shop-item-header">
+                            <span>장비 파괴 보호권 (~35단계)</span>
+                            <span class="shop-item-price">개당 5000G</span>
+                        </div>
+                        <div class="shop-buy-row">
+                            <button class="shop-btn" onclick="buyItem('protect', 5000, 1)">1개 구매</button>
+                            <button class="shop-btn" onclick="buyItem('protect', 5000, 5)">5개 구매</button>
+                            <button class="shop-btn" onclick="buyItem('protect', 5000, 10)">10개 구매</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="content-earn" style="display:flex; flex-direction:column; gap:10px; margin-bottom: 15px; border:2px dashed var(--border-color); padding:15px; background:#fff; border-radius:5px; box-sizing:border-box;">
-                    <div style="font-size:1.2rem; text-align: center; color:#2c3e50; background:#f9ebea; border-radius:5px; padding: 10px;">
-                        🔥 클릭 배율: <span id="click-multiplier-display" style="color:#e74c3c; font-weight:bold;">x1.0</span><br>
-                        <span style="font-size:1rem; color:#7f8c8d;">(최고 희생 레벨: <span id="sacrificed-level-display">0</span>)</span>
+                    <div style="display:flex; gap:8px; align-items:stretch;">
+                        <div style="flex:1; font-size:1.1rem; text-align: center; color:#2c3e50; background:#f9ebea; border-radius:5px; padding: 10px 6px; display:flex; flex-direction:column; justify-content:center;">
+                            <div>🔥 배율: <span id="click-multiplier-display" style="color:#e74c3c; font-weight:bold;">x1.0</span></div>
+                            <span style="font-size:0.9rem; color:#7f8c8d;">(최고 희생 레벨: <span id="sacrificed-level-display">0</span>)</span>
+                        </div>
+                        <button onclick="sacrificeSword()" style="flex:1; font-size:1.05rem; padding:10px 6px; background:#9b59b6; color:#fff; border:2px solid #8e44ad; border-radius:5px; font-weight:bold; cursor:pointer; box-sizing:border-box; line-height:1.3; word-break:keep-all;">🗡️ 현재 검 희생하기<br>(Lv.11 이상)</button>
                     </div>
-                    <button onclick="sacrificeSword()" style="font-size:1.3rem; width:100%; padding:10px; background:#9b59b6; color:#fff; border:2px solid #8e44ad; border-radius:5px; font-weight:bold; cursor:pointer; box-sizing:border-box;">🗡️ 현재 검 희생하기 (배율 증가)</button>
                     <button onclick="openQuiz()" style="font-size:1.5rem; width:100%; padding:10px; background:#3498db; color:#fff; border:2px solid #2980b9; border-radius:5px; font-weight:bold; cursor:pointer; box-sizing:border-box;">📝 퀴즈 풀기 시작!</button>
                     <button id="btn-free-gold" onclick="earnFreeGold()" style="font-size:1.5rem; width:100%; padding:10px; background:#2ecc71; color:#fff; border:2px solid #27ae60; border-radius:5px; font-weight:bold; cursor:pointer; box-sizing:border-box;">👆 공짜로 돈벌기</button>
                 </div>
@@ -1402,16 +1458,23 @@
             triggerAutoSave();
         }
 
-        function buyItem(type, price) {
-            if (gold >= price) {
-                gold -= price;
-                items[type]++;
+        function buyItem(type, price, qty = 1) {
+            const totalPrice = price * qty;
+            const itemNames = {
+                success: "성공 확률 증가 물약",
+                fail: "실패 확률 감소 물약",
+                protect: "장비 파괴 보호권"
+            };
+            if (gold >= totalPrice) {
+                gold -= totalPrice;
+                gold = Math.round(gold * 10) / 10;
+                items[type] += qty;
                 updateGoldUI();
                 updateItemUI();
-                addLog("상점에서 아이템을 구매했습니다.", "c-info");
+                addLog(`상점에서 ${itemNames[type] || '아이템'} ${qty}개를 구매했습니다. (-${totalPrice}G)`, "c-info");
                 triggerAutoSave();
             } else {
-                addLog("골드가 부족합니다!", "c-d");
+                addLog(`골드가 부족합니다! (${totalPrice}G 필요)`, "c-d");
             }
         }
 
