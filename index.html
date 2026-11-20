@@ -280,6 +280,51 @@
             font-size: 1.2rem;
             font-weight: bold;
         }
+        @keyframes inv-wiggle {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-7deg) scale(1.06); }
+            75% { transform: rotate(7deg) scale(1.06); }
+        }
+        .inv-slot.wiggle {
+            animation: inv-wiggle 0.35s infinite;
+            border: 3px solid #e74c3c;
+            background: #fdedec;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+        }
+        .inv-slot.offered {
+            border: 3px solid #8e44ad;
+            background: #f5eef8;
+            box-shadow: 0 0 12px rgba(142, 68, 173, 0.7);
+        }
+        .inv-offer-badge {
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #8e44ad;
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: bold;
+            padding: 1px 6px;
+            border-radius: 8px;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        #btn-offer-sword {
+            width: 100%;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: #fff;
+            border: 3px solid #922b21;
+            font-size: 1.35rem;
+            font-weight: bold;
+            padding: 10px 16px;
+            box-shadow: 3px 3px 0 #7b241c;
+        }
+        #btn-offer-sword.active-mode {
+            background: linear-gradient(135deg, #8e44ad, #6c3483);
+            border-color: #4a235a;
+            box-shadow: 3px 3px 0 #4a235a;
+        }
 
         /* Modals */
         #dict-modal, #ranking-modal {
@@ -812,10 +857,13 @@
             </div>
             
             <!-- Inventory -->
-            <div id="inventory-panel">
-                <div class="inv-slot" onclick="handleInventoryClick(0)" id="inv-0"></div>
-                <div class="inv-slot" onclick="handleInventoryClick(1)" id="inv-1"></div>
-                <div class="inv-slot" onclick="handleInventoryClick(2)" id="inv-2"></div>
+            <div id="inventory-panel" style="flex-direction: column; align-items: center;">
+                <div style="display:flex; gap:15px; justify-content:center; width:100%;">
+                    <div class="inv-slot" onclick="handleInventoryClick(0)" id="inv-0"></div>
+                    <div class="inv-slot" onclick="handleInventoryClick(1)" id="inv-1"></div>
+                    <div class="inv-slot" onclick="handleInventoryClick(2)" id="inv-2"></div>
+                </div>
+                <button id="btn-offer-sword" onclick="toggleOfferMode()">🔥 검 재물로 바치기 (인벤토리 검 선택)</button>
             </div>
 
             <!-- 강화 일지 -->
@@ -1269,6 +1317,8 @@
         let currentLevel = 0;
         let gold = 0;
         let inventory = [null, null, null];
+        let isOfferingMode = false;
+        let offeredInvIdx = null;
         let unlockedLevels = new Set([0]);
         let sacrificedLevel = 0;
         let totalCorrectAnswers = 0;
@@ -2045,6 +2095,19 @@
                 else { baseM += baseF; baseF = 0; }
             }
 
+            let offerBonus = 0;
+            if (offeredInvIdx !== null && inventory[offeredInvIdx] !== null) {
+                offerBonus = inventory[offeredInvIdx] / 4; // (레벨 / 2) / 2
+                baseS += offerBonus;
+                const fDrop = Math.min(baseF, offerBonus);
+                baseF -= fDrop;
+                const rem = offerBonus - fDrop;
+                if (rem > 0) {
+                    const mDrop = Math.min(baseM, rem);
+                    baseM -= mDrop;
+                }
+            }
+
             let total = baseS + baseG + baseM + baseF + baseD;
             return {
                 great: (baseG / total) * 100,
@@ -2057,14 +2120,19 @@
 
         function updateProbUI() {
             const p = getProbabilities();
+            const hasOffer = (offeredInvIdx !== null && inventory[offeredInvIdx] !== null);
+            const offerBonus = hasOffer ? (inventory[offeredInvIdx] / 4) : 0;
+            const offerSuccessTag = hasOffer ? ` <span style="color:#8e44ad; font-weight:bold;">(+${offerBonus.toFixed(1)}%)</span>` : '';
+            const offerFailTag = hasOffer ? ` <span style="color:#8e44ad; font-weight:bold;">(-${offerBonus.toFixed(1)}%)</span>` : '';
             probList.innerHTML = `
+                ${hasOffer ? `<li style="color:#8e44ad; font-weight:bold; font-size:1.15rem; margin-bottom:8px;">🔥 재물 선택됨: Lv.${inventory[offeredInvIdx]} 검</li>` : ''}
                 ${activeBuff === 'great_success' ? '<li style="color:#e74c3c; font-weight:bold; font-size:1.2rem; margin-bottom:10px;">🔥 5연속 정답 버프! (대성공 +10%)</li>' : ''}
                 ${activeBuff === 'success' ? '<li style="color:#e74c3c; font-weight:bold; font-size:1.2rem; margin-bottom:10px;">🔥 5연속 정답 버프! (성공 +10%)</li>' : ''}
                 ${activeBuff === 'fail_reduce' ? '<li style="color:#e74c3c; font-weight:bold; font-size:1.2rem; margin-bottom:10px;">🔥 5연속 정답 버프! (실패 -10%)</li>' : ''}
                 <li class="c-s">대성공 (+2): ${p.great.toFixed(1)}%</li>
-                <li class="c-s">성공 (+1): ${p.success.toFixed(1)}%</li>
+                <li class="c-s">성공 (+1): ${p.success.toFixed(1)}%${offerSuccessTag}</li>
                 <li class="c-m">유지 (0): ${p.maintain.toFixed(1)}%</li>
-                <li class="c-f">실패 (-1): ${p.fail.toFixed(1)}%</li>
+                <li class="c-f">실패 (-1): ${p.fail.toFixed(1)}%${offerFailTag}</li>
                 <li class="c-d">파괴 (소멸): ${p.destroy.toFixed(1)}%</li>
             `;
         }
@@ -2142,6 +2210,14 @@
             if (activeItems.downgrade && currentLevel >= 15) {
                 items.downgrade--;
                 if (items.downgrade <= 0) { activeItems.downgrade = false; addLog("파괴 완화권을 모두 소모했습니다.", "c-f"); }
+            }
+            if (offeredInvIdx !== null && inventory[offeredInvIdx] !== null) {
+                const usedLvl = inventory[offeredInvIdx];
+                inventory[offeredInvIdx] = null;
+                offeredInvIdx = null;
+                isOfferingMode = false;
+                addLog(`🔥 Lv.${usedLvl} 검을 재물로 바쳐 강화에 사용했습니다!`, "c-info");
+                updateInventoryUI();
             }
             if (activeBuff) {
                 activeBuff = null;
@@ -2500,10 +2576,42 @@
         }
 
         /** --- INVENTORY & DICT --- */
+        function toggleOfferMode() {
+            if (isAnimating) return;
+            const hasAnySword = inventory.some(item => item !== null && item > 0);
+            if (!isOfferingMode && !hasAnySword) {
+                addLog("인벤토리에 재물로 바칠 검(Lv.1 이상)이 없습니다!", "c-d");
+                return;
+            }
+            if (isOfferingMode) {
+                isOfferingMode = false;
+            } else {
+                isOfferingMode = true;
+                addLog("🔥 재물로 바칠 인벤토리의 검을 선택하세요!", "c-info");
+            }
+            updateInventoryUI();
+        }
+
         function updateInventoryUI() {
+            const offerBtn = document.getElementById('btn-offer-sword');
+            if (offerBtn) {
+                if (isOfferingMode) {
+                    offerBtn.classList.add('active-mode');
+                    offerBtn.innerText = '✨ 재물로 바칠 검을 클릭하세요 (취소)';
+                } else if (offeredInvIdx !== null && inventory[offeredInvIdx] !== null) {
+                    offerBtn.classList.add('active-mode');
+                    const bonus = (inventory[offeredInvIdx] / 4).toFixed(1);
+                    offerBtn.innerText = `🔥 재물 선택됨: Lv.${inventory[offeredInvIdx]} (+${bonus}% / -${bonus}%)`;
+                } else {
+                    offerBtn.classList.remove('active-mode');
+                    offerBtn.innerText = '🔥 검 재물로 바치기 (인벤토리 검 선택)';
+                }
+            }
+
             for (let i = 0; i < 3; i++) {
                 const slot = document.getElementById(`inv-${i}`);
                 slot.innerHTML = '';
+                slot.classList.remove('wiggle', 'offered');
                 if (inventory[i] !== null) {
                     const c = document.createElement('canvas');
                     c.width = 60; c.height = 60; c.style.width = '100%'; c.style.height = '100%';
@@ -2512,6 +2620,17 @@
                     const lvlTxt = document.createElement('div');
                     lvlTxt.className = 'inv-lvl'; lvlTxt.innerText = `Lv.${inventory[i]}`;
                     slot.appendChild(lvlTxt);
+
+                    if (isOfferingMode && inventory[i] > 0) {
+                        slot.classList.add('wiggle');
+                    }
+                    if (offeredInvIdx === i) {
+                        slot.classList.add('offered');
+                        const badge = document.createElement('div');
+                        badge.className = 'inv-offer-badge';
+                        badge.innerText = '재물 선택됨';
+                        slot.appendChild(badge);
+                    }
                 } else {
                     slot.innerText = "+"; slot.style.fontSize = "2rem"; slot.style.color = "#ccc";
                 }
@@ -2534,7 +2653,30 @@
         function handleInventoryClick(idx) {
             if (isAnimating) return;
             const item = inventory[idx];
+
+            if (isOfferingMode) {
+                if (item === null || item <= 0) {
+                    addLog("Lv.1 이상의 검만 재물로 바칠 수 있습니다!", "c-d");
+                    return;
+                }
+                if (offeredInvIdx === idx) {
+                    offeredInvIdx = null;
+                    addLog("재물 선택을 해제했습니다.", "c-m");
+                } else {
+                    offeredInvIdx = idx;
+                    const bonus = (item / 4).toFixed(1);
+                    addLog(`🔥 Lv.${item} 검을 재물로 선택했습니다! (성공 +${bonus}%, 실패 -${bonus}%)`, "c-s");
+                }
+                isOfferingMode = false;
+                updateInventoryUI();
+                updateProbUI();
+                return;
+            }
+
             if (item !== null) {
+                if (offeredInvIdx === idx) {
+                    offeredInvIdx = null;
+                }
                 const temp = currentLevel;
                 currentLevel = item;
                 if (temp > 0) { inventory[idx] = temp; addLog(`Lv.${item} 검을 꺼내고 Lv.${temp} 검을 넣었습니다.`, "c-info"); }
