@@ -474,14 +474,23 @@
         #quiz-content {
             width: 95%;
             max-width: 740px;
-            max-height: 90vh;
-            overflow-y: auto;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
             background: var(--bg-color);
             border: 4px solid var(--border-color);
             border-radius: 12px;
             padding: 25px;
             text-align: center;
             background-image: repeating-linear-gradient(transparent, transparent 31px, var(--line-color) 31px, var(--line-color) 32px);
+            box-sizing: border-box;
+        }
+        #quiz-play {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-right: 6px;
             box-sizing: border-box;
         }
         .quiz-btn {
@@ -607,6 +616,24 @@
         #fullscreen-btn:hover {
             background: #f1c40f;
         }
+        #sound-btn {
+            position: fixed;
+            top: 15px;
+            right: 130px;
+            z-index: 5500;
+            font-size: 1rem;
+            font-weight: bold;
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.92);
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 2px 2px 0 var(--border-color);
+            cursor: pointer;
+        }
+        #sound-btn:hover {
+            background: #f1c40f;
+        }
 
         /* Title Screen */
         #title-screen {
@@ -629,11 +656,13 @@
         #title-box {
             width: 100%;
             max-width: 620px;
+            max-height: 92vh;
+            overflow-y: auto;
             background: rgba(255, 255, 255, 0.92);
             border: 4px solid var(--border-color);
             border-radius: 10px;
             box-shadow: 8px 8px 0 var(--border-color);
-            padding: 30px 28px;
+            padding: 24px 28px;
             text-align: center;
             box-sizing: border-box;
         }
@@ -726,11 +755,14 @@
             background: #fdfbf7;
             border: 2px dashed var(--border-color);
             border-radius: 8px;
-            padding: 18px 20px;
-            margin-bottom: 24px;
-            font-size: 1.05rem;
-            line-height: 1.65;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            font-size: 1.02rem;
+            line-height: 1.6;
             color: var(--text-color);
+            max-height: 220px;
+            overflow-y: auto;
+            box-sizing: border-box;
         }
         #tutorial-box h2 {
             font-size: 1.35rem;
@@ -788,6 +820,7 @@
     </style>
 </head>
 <body>
+    <button id="sound-btn" onclick="toggleSound()" title="효과음 켜기/끄기">🔊 효과음</button>
     <button id="fullscreen-btn" onclick="toggleFullscreen()" title="전체화면 전환">⛶ 전체화면</button>
 
     <!-- Title Screen -->
@@ -874,10 +907,11 @@
                             <th>파괴</th>
                             <th>푼 문제</th>
                             <th>공짜 클릭</th>
+                            <th>아이템</th>
                         </tr>
                     </thead>
                     <tbody id="ranking-table-body">
-                        <tr><td colspan="11" style="padding:20px; color:#7f8c8d;">랭킹 데이터를 불러오는 중...</td></tr>
+                        <tr><td colspan="12" style="padding:20px; color:#7f8c8d;">랭킹 데이터를 불러오는 중...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -895,7 +929,7 @@
                 <div id="quiz-question" style="font-size: 1.35rem; margin-bottom: 20px; font-weight:bold; background:rgba(255,255,255,0.8); padding:10px; border-radius:5px; word-break:keep-all;">문제 내용</div>
                 
                 <div id="quiz-input-area" style="display:none;">
-                    <input type="text" id="quiz-answer-input" style="font-size:1.1rem; padding:5px; width:80%; border:2px solid #333; font-family: 'Noto Sans KR', 'Malgun Gothic', 'Dotum', sans-serif; box-sizing:border-box;" placeholder="정답 입력" onkeypress="if(event.key === 'Enter') submitQuizAnswer()">
+                    <input type="text" id="quiz-answer-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="font-size:1.1rem; padding:5px; width:80%; border:2px solid #333; font-family: 'Noto Sans KR', 'Malgun Gothic', 'Dotum', sans-serif; box-sizing:border-box;" placeholder="정답 입력" onkeypress="if(event.key === 'Enter') submitQuizAnswer()">
                     <br><br>
                     <button class="quiz-btn" onclick="submitQuizAnswer()" style="background:#3498db; color:white; width:80%;">정답 제출</button>
                 </div>
@@ -1408,6 +1442,106 @@
             });
         }
 
+        /** --- WEB AUDIO API 효과음 엔진 --- */
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function getAudioCtx() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) audioCtx = new AudioContextClass();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('sound-btn');
+            if (btn) btn.innerText = soundEnabled ? '🔊 효과음' : '🔇 음소거';
+        }
+
+        function playTone(freq, type, startTime, duration, volume = 0.25, slideTo = null) {
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, startTime);
+            if (slideTo) {
+                osc.frequency.exponentialRampToValueAtTime(slideTo, startTime + duration);
+            }
+            gain.gain.setValueAtTime(volume, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        }
+
+        function playNoise(startTime, duration, volume = 0.25, filterFreq = 1000) {
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+            const bufferSize = Math.floor(ctx.sampleRate * duration);
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            const noise = ctx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(filterFreq, startTime);
+            const gain = ctx.createGain();
+            gain.gain.setValueAtTime(volume, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(ctx.destination);
+            noise.start(startTime);
+            noise.stop(startTime + duration);
+        }
+
+        function playSfx(type) {
+            if (!soundEnabled) return;
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+
+            if (type === 'HAMMER') {
+                // 묵직한 망치질 + 금속 타격음
+                playTone(180, 'triangle', now, 0.12, 0.35, 65);
+                playTone(920, 'sine', now, 0.09, 0.15, 420);
+                playNoise(now, 0.08, 0.2, 1800);
+            } else if (type === 'GREAT') {
+                // 대성공: 화려한 상승 아르페지오 팡파레
+                [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => {
+                    playTone(f, 'triangle', now + i * 0.065, 0.28, 0.25);
+                    playTone(f * 2, 'sine', now + i * 0.065, 0.2, 0.08);
+                });
+            } else if (type === 'SUCCESS') {
+                // 성공: 경쾌한 2단 상승음
+                playTone(523.25, 'sine', now, 0.14, 0.24);
+                playTone(783.99, 'triangle', now + 0.09, 0.24, 0.26);
+            } else if (type === 'MAINTAIN') {
+                // 유지: 담담한 둔탁음
+                playTone(330, 'sine', now, 0.12, 0.18, 310);
+                playTone(310, 'sine', now + 0.1, 0.12, 0.14, 295);
+            } else if (type === 'FAIL' || type === 'DOWNGRADE') {
+                // 실패 / 파괴 완화: 하강하는 아쉬운 효과음
+                playTone(340, 'sawtooth', now, 0.16, 0.16, 260);
+                playTone(250, 'sawtooth', now + 0.13, 0.25, 0.18, 150);
+            } else if (type === 'DESTROY') {
+                // 파괴: 깨지는 파열음 + 깊은 저음 붕괴
+                playNoise(now, 0.45, 0.38, 2200);
+                playTone(200, 'sawtooth', now, 0.45, 0.28, 45);
+                playTone(110, 'square', now + 0.05, 0.35, 0.2, 35);
+            }
+        }
+
         /** --- GAME STATE --- */
         let currentLevel = 0;
         let gold = 0;
@@ -1425,7 +1559,8 @@
             failCount: 0,
             destroyCount: 0,
             problemsSolved: 0,
-            freeGoldClicks: 0
+            freeGoldClicks: 0,
+            itemsUsed: 0
         };
         let unlockedTiers = new Set();
         let solvedRequiredQs = new Set();
@@ -1761,7 +1896,9 @@
                 if (recentQuestions.length > 10) recentQuestions.shift();
             }
 
-            document.getElementById('quiz-play').style.display = 'block';
+            const quizPlayEl = document.getElementById('quiz-play');
+            quizPlayEl.style.display = 'block';
+            quizPlayEl.scrollTop = 0;
             document.getElementById('quiz-question').style.display = 'block'; 
             document.getElementById('quiz-question').innerHTML = `Q. ${currentQuiz.q}`;
             document.getElementById('quiz-streak').innerText = `🔥 연속 정답: ${quizStreak}`;
@@ -1812,8 +1949,10 @@
                 } else {
                     inputArea.style.display = 'block';
                     choicesArea.style.display = 'none';
-                    document.getElementById('quiz-answer-input').value = '';
-                    setTimeout(() => document.getElementById('quiz-answer-input').focus(), 100);
+                    const ansInput = document.getElementById('quiz-answer-input');
+                    ansInput.value = '';
+                    ansInput.setAttribute('name', 'quiz_ans_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7));
+                    setTimeout(() => ansInput.focus(), 100);
                 }
             }
         }
@@ -2311,6 +2450,7 @@
 
             isAnimating = true;
             btnEnhance.disabled = true;
+            playSfx('HAMMER');
             const p = getProbabilities();
             
             if (isFever) {
@@ -2350,18 +2490,22 @@
 
             if (activeItems.success) { 
                 items.success--; 
+                playerStats.itemsUsed++;
                 if (items.success <= 0) { activeItems.success = false; addLog("성공 물약을 모두 소모했습니다.", "c-f"); }
             }
             if (activeItems.fail) { 
                 items.fail--; 
+                playerStats.itemsUsed++;
                 if (items.fail <= 0) { activeItems.fail = false; addLog("실패 물약을 모두 소모했습니다.", "c-f"); }
             }
             if (activeItems.protect && currentLevel < 36) { 
                 items.protect--; 
+                playerStats.itemsUsed++;
                 if (items.protect <= 0) { activeItems.protect = false; addLog("보호권을 모두 소모했습니다.", "c-f"); }
             }
             if (activeItems.downgrade && currentLevel >= 15) {
                 items.downgrade--;
+                playerStats.itemsUsed++;
                 if (items.downgrade <= 0) { activeItems.downgrade = false; addLog("파괴 완화권을 모두 소모했습니다.", "c-f"); }
             }
             if (offeredInvIdx !== null && inventory[offeredInvIdx] !== null) {
@@ -2387,6 +2531,7 @@
             currentLevel = targetLevel;
             unlockedLevels.add(currentLevel);
             playerStats.enhanceCount++;
+            playSfx(hitEffectResult);
             
             if (hitEffectResult === 'GREAT') { playerStats.greatCount++; addLog(`[대성공] 엄청난 섬광! Lv.${currentLevel} 달성!`, 'c-s'); }
             else if (hitEffectResult === 'SUCCESS') { playerStats.successCount++; addLog(`[성공] 탕! Lv.${currentLevel} 달성!`, 'c-s'); }
@@ -2959,7 +3104,8 @@
                 failCount: playerStats.failCount,
                 destroyCount: playerStats.destroyCount,
                 problemsSolved: playerStats.problemsSolved,
-                freeGoldClicks: playerStats.freeGoldClicks
+                freeGoldClicks: playerStats.freeGoldClicks,
+                itemsUsed: playerStats.itemsUsed
             };
         }
 
@@ -2967,7 +3113,7 @@
             const s = getCurrentRankingPayload();
             const el = document.getElementById('rank-my-stats');
             if (el) {
-                el.innerHTML = `<strong>내 현재 기록:</strong> 최고 <strong>Lv.${s.maxLevel}</strong> | 강화 ${s.enhanceCount}회 (대성공 ${s.greatCount} / 성공 ${s.successCount} / 유지 ${s.maintainCount} / 실패 ${s.failCount} / 파괴 ${s.destroyCount}) | 푼 문제 ${s.problemsSolved}개 | 공짜 돈벌기 ${s.freeGoldClicks}회`;
+                el.innerHTML = `<strong>내 현재 기록:</strong> 최고 <strong>Lv.${s.maxLevel}</strong> | 강화 ${s.enhanceCount}회 (대성공 ${s.greatCount} / 성공 ${s.successCount} / 유지 ${s.maintainCount} / 실패 ${s.failCount} / 파괴 ${s.destroyCount}) | 푼 문제 ${s.problemsSolved}개 | 공짜 돈벌기 ${s.freeGoldClicks}회 | 사용 아이템 ${s.itemsUsed}개`;
             }
         }
 
@@ -2980,10 +3126,10 @@
         async function refreshRankings() {
             const tbody = document.getElementById('ranking-table-body');
             if (typeof window.loadFirebaseRankings !== 'function') {
-                tbody.innerHTML = '<tr><td colspan="11" style="padding:20px; color:#c0392b;">Firebase 연결을 초기화하는 중입니다. 잠시 후 다시 시도하세요.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="12" style="padding:20px; color:#c0392b;">Firebase 연결을 초기화하는 중입니다. 잠시 후 다시 시도하세요.</td></tr>';
                 return;
             }
-            tbody.innerHTML = '<tr><td colspan="11" style="padding:20px; color:#7f8c8d;">⏳ 랭킹 불러오는 중...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="12" style="padding:20px; color:#7f8c8d;">⏳ 랭킹 불러오는 중...</td></tr>';
             await window.loadFirebaseRankings();
         }
 
@@ -3069,6 +3215,7 @@
                 destroyCount: stats.destroyCount,
                 problemsSolved: stats.problemsSolved,
                 freeGoldClicks: stats.freeGoldClicks,
+                itemsUsed: stats.itemsUsed ?? 0,
                 updatedAt: Date.now()
             });
         };
@@ -3088,7 +3235,7 @@
                 });
 
                 if (list.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="11" style="padding:20px; color:#7f8c8d;">아직 등록된 랭킹이 없습니다. 첫 번째로 등록해 보세요!</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="12" style="padding:20px; color:#7f8c8d;">아직 등록된 랭킹이 없습니다. 첫 번째로 등록해 보세요!</td></tr>';
                     return;
                 }
 
@@ -3113,11 +3260,12 @@
                         <td style="color:#c0392b;">${r.destroyCount ?? 0}</td>
                         <td style="font-weight:bold;">${r.problemsSolved ?? 0}</td>
                         <td>${r.freeGoldClicks ?? 0}</td>
+                        <td style="color:#8e44ad; font-weight:bold;">${r.itemsUsed ?? 0}</td>
                     </tr>`;
                 }).join('');
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = `<tr><td colspan="11" style="padding:20px; color:#c0392b;">랭킹 불러오기 실패 (Firestore 보안 규칙을 확인해 주세요)</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="12" style="padding:20px; color:#c0392b;">랭킹 불러오기 실패 (Firestore 보안 규칙을 확인해 주세요)</td></tr>`;
             }
         };
     </script>
