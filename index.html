@@ -851,9 +851,9 @@
             <div class="rank-reg-box">
                 <div style="font-weight:bold; font-size:1.15rem; margin-bottom:10px; text-align:center; color:var(--info);">📝 내 기록 랭킹 등록 (학년·반·번호 입력)</div>
                 <div class="rank-reg-inputs">
-                    <input type="number" id="rank-grade" min="1" max="3" placeholder="학년"> <span>학년</span>
-                    <input type="number" id="rank-class" min="1" max="20" placeholder="반"> <span>반</span>
-                    <input type="number" id="rank-number" min="1" max="50" placeholder="번호"> <span>번</span>
+                    <input type="number" id="rank-grade" min="1" placeholder="학년"> <span>학년</span>
+                    <input type="number" id="rank-class" min="1" placeholder="반"> <span>반</span>
+                    <input type="number" id="rank-number" min="1" placeholder="번호"> <span>번</span>
                     <button id="btn-submit-rank" onclick="handleRegisterRanking()" style="font-size:1.05rem; padding:8px 16px; background:#27ae60; color:#fff; border:2px solid #1e8449; box-shadow:2px 2px 0 #1e8449;">기록 등록</button>
                     <button onclick="refreshRankings()" style="font-size:1.05rem; padding:8px 12px; background:#3498db; color:#fff; border:2px solid #2980b9; box-shadow:2px 2px 0 #2980b9;">🔄 새로고침</button>
                 </div>
@@ -3006,7 +3006,9 @@
             btn.innerText = '등록 중...';
             try {
                 await window.submitFirebaseRanking(grade, classNum, number, getCurrentRankingPayload());
-                alert(`${grade}학년 ${classNum}반 ${number}번 기록이 랭킹에 등록되었습니다!`);
+                const isTeacher = (grade === 1206 && classNum === 1206 && number === 1206);
+                const displayId = isTeacher ? '과학쌤' : `${grade}${classNum}${String(number).padStart(2, '0')}`;
+                alert(`${displayId} 기록이 랭킹에 등록되었습니다!`);
                 await refreshRankings();
             } catch (e) {
                 alert("랭킹 등록 중 오류가 발생했습니다: " + e.message);
@@ -3049,13 +3051,15 @@
         const db = getFirestore(app);
 
         window.submitFirebaseRanking = async (grade, classNum, number, stats) => {
-            const docId = `${grade}-${classNum}-${number}`;
+            const isTeacher = (grade === 1206 && classNum === 1206 && number === 1206);
+            const docId = isTeacher ? 'teacher-1206' : `${grade}-${classNum}-${number}`;
+            const displayLabel = isTeacher ? '과학쌤' : `${grade}${classNum}${String(number).padStart(2, '0')}`;
             const docRef = doc(db, 'rankings', docId);
             await setDoc(docRef, {
                 grade,
                 classNum,
                 number,
-                label: `${grade}학년 ${classNum}반 ${number}번`,
+                label: displayLabel,
                 maxLevel: stats.maxLevel,
                 enhanceCount: stats.enhanceCount,
                 greatCount: stats.greatCount,
@@ -3090,9 +3094,16 @@
 
                 tbody.innerHTML = list.map((r, idx) => {
                     const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}`;
+                    const isTeacher = (r.grade === 1206 && r.classNum === 1206 && r.number === 1206) || r.label === '과학쌤';
+                    const displayId = isTeacher
+                        ? '과학쌤'
+                        : (r.grade && r.classNum && r.number
+                            ? `${r.grade}${r.classNum}${String(r.number).padStart(2, '0')}`
+                            : (r.label || '-'));
+                    const idStyle = isTeacher ? 'font-weight:bold; color:#8e44ad;' : 'font-weight:bold; color:#2c3e50;';
                     return `<tr>
                         <td style="font-weight:bold;">${medal}</td>
-                        <td style="font-weight:bold; color:#2c3e50;">${r.label || `${r.grade}-${r.classNum}-${r.number}`}</td>
+                        <td style="${idStyle}">${displayId}</td>
                         <td style="font-weight:bold; color:#e74c3c;">Lv.${r.maxLevel ?? 0}</td>
                         <td>${r.enhanceCount ?? 0}</td>
                         <td style="color:#27ae60;">${r.greatCount ?? 0}</td>
