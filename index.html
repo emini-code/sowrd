@@ -751,10 +751,10 @@
                 <h2>📜 게임 방법 안내</h2>
                 <ul>
                     <li><strong>강화하기:</strong> [망치질 하기!] 버튼을 눌러 50G를 소모해 검을 최대 40단계까지 강화하세요.</li>
+                    <li><strong>필수 문제 &amp; 구간 해금:</strong> 게임 시작 시 필수 문제를 모두 맞히면 강화가 해금되고 <strong>500G</strong>를 획득합니다. (오답 시 1번 문제부터 처음부터 다시 풀이) 이후 5·10단계(하), 15·20단계(중), 25단계 이상(상) 구간 해금 문제를 통과해야 다음 단계로 강화할 수 있습니다. (기회 1회, 오답 시 1단계 하락)</li>
                     <li><strong>돈벌기 &amp; 퀴즈:</strong> [돈벌기] 탭에서 과학 퀴즈를 풀면 250G(배율 적용)를 얻으며, 5연속 정답 시 랜덤 버프 또는 보너스 골드를 받습니다. 퀴즈 10문제를 맞히면 [공짜로 돈벌기]가 해금됩니다.</li>
-                    <li><strong>필수 문제 &amp; 구간 해금:</strong> 게임 시작 시 퀴즈 파일의 필수 문제를 모두 풀면 강화가 해금됩니다. 이후 5·10단계(하), 15·20단계(중), 25단계 이상(상) 구간 해금 문제를 통과해야 다음 단계로 강화할 수 있습니다. (기회 1회, 오답 시 1단계 하락)</li>
-                    <li><strong>상점 &amp; 아이템:</strong> 물약과 장비 파괴 보호권(35단계까지 파괴 확률을 유지 확률로 전환)을 구매해 전략적으로 사용하세요.</li>
-                    <li><strong>희생 &amp; 보관:</strong> 11단계 이상의 검을 희생하면 퀴즈와 공짜 돈벌기 배율이 영구 증가하며, 아끼는 검은 인벤토리에 보관할 수 있습니다.</li>
+                    <li><strong>상점 &amp; 검 상점:</strong> 물약, 장비 파괴 보호권(35단계까지 파괴 방지, 3,000G), 파괴 완화권(15단계 이상, 파괴 시 -10단계, 1,000G)을 구매할 수 있으며, 최고 도달 레벨(10·20·30단계)에 따라 [검 상점]에서 해당 단계 검을 직접 구매할 수 있습니다.</li>
+                    <li><strong>희생, 보관 &amp; 재물:</strong> 11단계 이상의 검을 희생하면 퀴즈와 공짜 돈벌기 배율이 영구 증가합니다. 인벤토리에 보관한 검은 꺼내 쓰거나 <strong>[검 재물로 바치기]</strong>로 소모해 강화 성공 확률 증가·실패 확률 감소 효과를 얻을 수 있습니다.</li>
                     <li><strong>피버 타임:</strong> 강화 시 '유지'가 5연속 나오면 3초간 골드 소모 없이 0.5초마다 광클 강화가 가능합니다!</li>
                 </ul>
             </div>
@@ -935,12 +935,12 @@
                     <div class="shop-item-card">
                         <div class="shop-item-header">
                             <span>장비 파괴 보호권 (~35단계)</span>
-                            <span class="shop-item-price">개당 5000G</span>
+                            <span class="shop-item-price">개당 3000G</span>
                         </div>
                         <div class="shop-buy-row">
-                            <button class="shop-btn" onclick="buyItem('protect', 5000, 1)">1개 구매</button>
-                            <button class="shop-btn" onclick="buyItem('protect', 5000, 5)">5개 구매</button>
-                            <button class="shop-btn" onclick="buyItem('protect', 5000, 10)">10개 구매</button>
+                            <button class="shop-btn" onclick="buyItem('protect', 3000, 1)">1개 구매</button>
+                            <button class="shop-btn" onclick="buyItem('protect', 3000, 5)">5개 구매</button>
+                            <button class="shop-btn" onclick="buyItem('protect', 3000, 10)">10개 구매</button>
                         </div>
                     </div>
                     <div class="shop-item-card">
@@ -1355,6 +1355,7 @@
         let hitEffectResult = '';
         let targetLevel = 0;
         let suspenseTime = 0;
+        let suspenseDuration = 1500;
         let wasSuspense = false;
 
         let quizStreak = 0;
@@ -1831,6 +1832,7 @@
                         addLog(`[구간 해금 오답] 문제를 틀려 강화 단계가 하락했습니다. (현재 Lv.${currentLevel})`, "c-d");
                         document.getElementById('custom-alert-message').innerText = `구간 해금 문제를 틀려 강화 단계가 하락했습니다.\n(현재 Lv.${currentLevel})`;
                         document.getElementById('custom-alert-modal').style.display = 'flex';
+                        syncItemAvailability();
                         updateProbUI();
                         closeQuiz();
                         triggerAutoSave();
@@ -1919,6 +1921,7 @@
             gold = Math.round(gold * 10) / 10;
             currentLevel = targetLvl;
             unlockedLevels.add(targetLvl);
+            syncItemAvailability();
             updateGoldUI();
             updateProbUI();
             updateTierLockUI();
@@ -1967,6 +1970,7 @@
             
             sacrificedLevel = currentLevel;
             currentLevel = 0;
+            syncItemAvailability();
             updateProbUI();
             updateMultiplierUI();
             updateTierLockUI();
@@ -2025,6 +2029,21 @@
         }
 
         /** --- ITEMS --- */
+        function syncItemAvailability(silent = false) {
+            let changed = false;
+            if (currentLevel >= 36 && activeItems.protect) {
+                activeItems.protect = false;
+                changed = true;
+                if (!silent) addLog("⚠️ 36단계 이상에서는 파괴 보호권이 자동으로 해제됩니다.", "c-d");
+            }
+            if (currentLevel < 15 && activeItems.downgrade) {
+                activeItems.downgrade = false;
+                changed = true;
+                if (!silent) addLog("⚠️ 15단계 미만이 되어 파괴 완화권이 자동으로 해제되었습니다.", "c-m");
+            }
+            if (changed) updateItemUI();
+        }
+
         function toggleItem(type) {
             if (!activeItems[type]) {
                 if (items[type] <= 0) {
@@ -2038,6 +2057,14 @@
                 if (type === 'downgrade' && currentLevel < 15) {
                     addLog("🚫 파괴 완화권은 15레벨 검을 강화할 때부터 사용할 수 있습니다!", "c-d");
                     return;
+                }
+                // 보호권과 파괴 완화권 중복 소모 방지 (상호 배타적 전환)
+                if (type === 'protect' && activeItems.downgrade) {
+                    activeItems.downgrade = false;
+                    addLog("ℹ️ 파괴 보호권 활성화로 파괴 완화권이 자동 해제되었습니다.", "c-m");
+                } else if (type === 'downgrade' && activeItems.protect) {
+                    activeItems.protect = false;
+                    addLog("ℹ️ 파괴 완화권 활성화로 파괴 보호권이 자동 해제되었습니다.", "c-m");
                 }
             }
             activeItems[type] = !activeItems[type];
@@ -2096,7 +2123,7 @@
             }
 
             let offerBonus = 0;
-            if (offeredInvIdx !== null && inventory[offeredInvIdx] !== null) {
+            if (!isFever && offeredInvIdx !== null && inventory[offeredInvIdx] !== null) {
                 offerBonus = inventory[offeredInvIdx] / 4; // (레벨 / 2) / 2
                 baseS += offerBonus;
                 const fDrop = Math.min(baseF, offerBonus);
@@ -2120,7 +2147,7 @@
 
         function updateProbUI() {
             const p = getProbabilities();
-            const hasOffer = (offeredInvIdx !== null && inventory[offeredInvIdx] !== null);
+            const hasOffer = (!isFever && offeredInvIdx !== null && inventory[offeredInvIdx] !== null);
             const offerBonus = hasOffer ? (inventory[offeredInvIdx] / 4) : 0;
             const offerSuccessTag = hasOffer ? ` <span style="color:#8e44ad; font-weight:bold;">(+${offerBonus.toFixed(1)}%)</span>` : '';
             const offerFailTag = hasOffer ? ` <span style="color:#8e44ad; font-weight:bold;">(-${offerBonus.toFixed(1)}%)</span>` : '';
@@ -2186,7 +2213,7 @@
             } else if (rand < p.great + p.success + p.maintain + p.fail) {
                 hitEffectResult = 'FAIL'; targetLevel = Math.max(0, currentLevel - 1);
             } else {
-                if (activeItems.downgrade && currentLevel >= 15) {
+                if (activeItems.downgrade && !activeItems.protect && currentLevel >= 15) {
                     hitEffectResult = 'DOWNGRADE';
                     targetLevel = Math.max(0, currentLevel - 10);
                 } else {
@@ -2252,22 +2279,14 @@
                         addLog("🌈 피버 타임 발동! 3초간 골드 소모 없이 0.5초 광클 강화!", "c-s");
                         isAnimating = false;
                         btnEnhance.disabled = false;
+                        updateProbUI();
                     }
                 } else {
                     maintainStreak = 0;
                 }
             }
             
-            if (currentLevel >= 36 && activeItems.protect) {
-                activeItems.protect = false;
-                addLog("⚠️ 36단계에 도달하여 파괴 보호권이 강제로 해제됩니다!", "c-d");
-                updateItemUI();
-            }
-            if (currentLevel < 15 && activeItems.downgrade) {
-                activeItems.downgrade = false;
-                addLog("⚠️ 15단계 미만이 되어 파괴 완화권이 자동으로 해제되었습니다.", "c-m");
-                updateItemUI();
-            }
+            syncItemAvailability();
 
             updateProbUI();
             updateTierLockUI();
@@ -2503,7 +2522,7 @@
             let suspenseShakeX = 0, suspenseShakeY = 0, flashAlpha = 0;
 
             if (hammerState === 'SUSPENSE') {
-                let intensity = 1 - Math.max(0, suspenseTime / 3000); 
+                let intensity = 1 - Math.max(0, suspenseTime / suspenseDuration); 
                 let shake = intensity * 20; 
                 suspenseShakeX = (Math.random() - 0.5) * shake;
                 suspenseShakeY = (Math.random() - 0.5) * shake;
@@ -2533,7 +2552,10 @@
                 hammerAngle += 0.6; 
                 if (hammerAngle > 0.5) {
                     if (currentLevel >= 30) {
-                        hammerState = 'SUSPENSE'; suspenseTime = 3000; wasSuspense = true;
+                        hammerState = 'SUSPENSE';
+                        suspenseDuration = currentLevel >= 36 ? 2500 : 1500;
+                        suspenseTime = suspenseDuration;
+                        wasSuspense = true;
                         drawHammer(ctx, cx + 50, cy - 100, 0.6); 
                     } else {
                         hammerState = 'HIT'; hitEffectTime = 250; wasSuspense = false;
@@ -2565,6 +2587,7 @@
                 if (feverTime <= 0) {
                     isFever = false;
                     addLog("🌈 피버 타임 종료!", "c-m");
+                    updateProbUI();
                     if (!isAnimating) btnEnhance.disabled = false;
                 }
             }
@@ -2645,6 +2668,7 @@
                 inventory[emptyIdx] = currentLevel;
                 currentLevel = 0;
                 addLog(`검을 보관했습니다. 새 검을 꺼냅니다.`, "c-info");
+                syncItemAvailability();
                 updateInventoryUI(); updateProbUI(); updateTierLockUI(); triggerAutoSave();
             } else {
                 addLog("보관함이 가득 찼습니다!", "c-d");
@@ -2682,11 +2706,7 @@
                 currentLevel = item;
                 if (temp > 0) { inventory[idx] = temp; addLog(`Lv.${item} 검을 꺼내고 Lv.${temp} 검을 넣었습니다.`, "c-info"); }
                 else { inventory[idx] = null; addLog(`Lv.${item} 검을 꺼냈습니다.`, "c-info"); }
-                if (currentLevel >= 36 && activeItems.protect) {
-                    activeItems.protect = false;
-                    addLog("⚠️ 36단계 이상 검을 장착하여 파괴 보호권이 강제로 해제되었습니다!", "c-d");
-                    updateItemUI();
-                }
+                syncItemAvailability();
                 updateInventoryUI(); updateProbUI(); updateTierLockUI(); triggerAutoSave();
             }
         }
