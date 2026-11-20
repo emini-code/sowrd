@@ -190,12 +190,27 @@
             background: #e8f8f5;
             border-color: #27ae60;
         }
+        .item-label-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+            gap: 2px;
+        }
+        .item-desc {
+            font-size: 0.88rem;
+            font-weight: normal;
+            color: #666;
+            line-height: 1.25;
+        }
         .item-count {
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             color: #555;
             background: #eee;
             padding: 2px 8px;
             border-radius: 10px;
+            flex-shrink: 0;
+            margin-left: 8px;
         }
 
         /* Shop */
@@ -982,7 +997,7 @@
             <div class="btn-group">
                 <button onclick="saveToInventory()">인벤토리에 보관</button>
                 <button onclick="openDictionary()">도감 보기</button>
-                <button onclick="openRankingModal()" style="background:#ffeaa7;">🏆 랭킹</button>
+                <button onclick="openRankingModal()" style="background:#ffeaa7;">🏆 랭킹 등록/보기</button>
             </div>
             
             <!-- Inventory -->
@@ -1018,11 +1033,19 @@
                     <button class="item-btn" id="btn-item-fail" onclick="toggleItem('fail')">
                         실패 감소 물약 (-10%) <span class="item-count" id="count-fail">남은 수량: 3</span>
                     </button>
-                    <button class="item-btn" id="btn-item-protect" onclick="toggleItem('protect')">
-                        장비 파괴 보호권 (파괴 방지, ~35단계) <span class="item-count" id="count-protect">남은 수량: 3</span>
-                    </button>
                     <button class="item-btn" id="btn-item-downgrade" onclick="toggleItem('downgrade')">
-                        파괴 완화권 (파괴 시 -10단계, Lv.15+) <span class="item-count" id="count-downgrade">남은 수량: 0</span>
+                        <span class="item-label-wrap">
+                            <span>파괴 완화권</span>
+                            <span class="item-desc">(파괴 대신 -10단계로 하락, Lv.15이상 사용 가능)</span>
+                        </span>
+                        <span class="item-count" id="count-downgrade">남은 수량: 0</span>
+                    </button>
+                    <button class="item-btn" id="btn-item-protect" onclick="toggleItem('protect')">
+                        <span class="item-label-wrap">
+                            <span>장비 파괴 보호권</span>
+                            <span class="item-desc">(파괴 방지, 35단계까지 사용 가능)</span>
+                        </span>
+                        <span class="item-count" id="count-protect">남은 수량: 3</span>
                     </button>
                 </div>
             </div>
@@ -1063,24 +1086,30 @@
                     </div>
                     <div class="shop-item-card">
                         <div class="shop-item-header">
-                            <span>장비 파괴 보호권 (~35단계)</span>
-                            <span class="shop-item-price">개당 3000G</span>
-                        </div>
-                        <div class="shop-buy-row">
-                            <button class="shop-btn" onclick="buyItem('protect', 3000, 1)">1개 구매</button>
-                            <button class="shop-btn" onclick="buyItem('protect', 3000, 5)">5개 구매</button>
-                            <button class="shop-btn" onclick="buyItem('protect', 3000, 10)">10개 구매</button>
-                        </div>
-                    </div>
-                    <div class="shop-item-card">
-                        <div class="shop-item-header">
-                            <span>파괴 완화권 (Lv.15+, 파괴 시 -10)</span>
-                            <span class="shop-item-price">개당 1000G</span>
+                            <span class="item-label-wrap">
+                                <span>파괴 완화권</span>
+                                <span class="item-desc">(파괴 대신 -10단계로 하락, Lv.15이상 사용 가능)</span>
+                            </span>
+                            <span class="shop-item-price" style="flex-shrink:0; margin-left:8px;">개당 1000G</span>
                         </div>
                         <div class="shop-buy-row">
                             <button class="shop-btn" onclick="buyItem('downgrade', 1000, 1)">1개 구매</button>
                             <button class="shop-btn" onclick="buyItem('downgrade', 1000, 5)">5개 구매</button>
                             <button class="shop-btn" onclick="buyItem('downgrade', 1000, 10)">10개 구매</button>
+                        </div>
+                    </div>
+                    <div class="shop-item-card">
+                        <div class="shop-item-header">
+                            <span class="item-label-wrap">
+                                <span>장비 파괴 보호권</span>
+                                <span class="item-desc">(파괴 방지, 35단계까지 사용 가능)</span>
+                            </span>
+                            <span class="shop-item-price" style="flex-shrink:0; margin-left:8px;">개당 3000G</span>
+                        </div>
+                        <div class="shop-buy-row">
+                            <button class="shop-btn" onclick="buyItem('protect', 3000, 1)">1개 구매</button>
+                            <button class="shop-btn" onclick="buyItem('protect', 3000, 5)">5개 구매</button>
+                            <button class="shop-btn" onclick="buyItem('protect', 3000, 10)">10개 구매</button>
                         </div>
                     </div>
                 </div>
@@ -2783,6 +2812,63 @@
             ctx.restore();
         }
 
+        function drawActiveItemsOnCanvas(ctx) {
+            const activeLabels = [];
+            if (activeItems.success) activeLabels.push({ text: '성공 증가 물약', bg: '#e8f8f5', border: '#27ae60', color: '#1e8449' });
+            if (activeItems.fail) activeLabels.push({ text: '실패 감소 물약', bg: '#ebf5fb', border: '#2980b9', color: '#1f618d' });
+            if (activeItems.protect) activeLabels.push({ text: '장비 파괴 보호권', bg: '#f5eef8', border: '#8e44ad', color: '#6c3483' });
+            if (activeItems.downgrade) activeLabels.push({ text: '파괴 완화권', bg: '#fef5e7', border: '#e67e22', color: '#b9770e' });
+
+            if (activeLabels.length === 0) return;
+
+            ctx.save();
+            ctx.font = "bold 13px 'Noto Sans KR', sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            const padX = 10;
+            const badgeH = 26;
+            const gap = 8;
+            const measured = activeLabels.map(item => ({
+                ...item,
+                w: ctx.measureText(item.text).width + padX * 2
+            }));
+
+            const totalW = measured.reduce((sum, m) => sum + m.w, 0) + gap * (measured.length - 1);
+            let curX = (canvas.width - totalW) / 2;
+            const y = canvas.height - 26;
+
+            measured.forEach(m => {
+                const bx = curX;
+                const by = y - badgeH / 2;
+                const r = 12;
+
+                ctx.beginPath();
+                ctx.moveTo(bx + r, by);
+                ctx.lineTo(bx + m.w - r, by);
+                ctx.quadraticCurveTo(bx + m.w, by, bx + m.w, by + r);
+                ctx.lineTo(bx + m.w, by + badgeH - r);
+                ctx.quadraticCurveTo(bx + m.w, by + badgeH, bx + m.w - r, by + badgeH);
+                ctx.lineTo(bx + r, by + badgeH);
+                ctx.quadraticCurveTo(bx, by + badgeH, bx, by + badgeH - r);
+                ctx.lineTo(bx, by + r);
+                ctx.quadraticCurveTo(bx, by, bx + r, by);
+                ctx.closePath();
+
+                ctx.fillStyle = m.bg;
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = m.border;
+                ctx.stroke();
+
+                ctx.fillStyle = m.color;
+                ctx.fillText(m.text, bx + m.w / 2, y + 0.5);
+                curX += m.w + gap;
+            });
+
+            ctx.restore();
+        }
+
         function gameLoop(timestamp) {
             if (!lastTime) lastTime = timestamp;
             const dt = timestamp - lastTime;
@@ -2815,6 +2901,8 @@
                 ctx.fillText(`Lv.${currentLevel} ${getSwordName(currentLevel)}`, cx, 40 + suspenseShakeY);
                 ctx.restore();
             }
+
+            drawActiveItemsOnCanvas(ctx);
 
             if (hammerState === 'SWING_BACK') {
                 hammerAngle -= 0.1; 
