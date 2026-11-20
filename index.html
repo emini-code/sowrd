@@ -358,15 +358,77 @@
         .dict-name { font-size: 1.3rem; margin-top: 5px; font-weight: bold; }
 
         #ranking-content {
-            width: 80%;
-            max-width: 600px;
-            height: 80%;
+            width: 94%;
+            max-width: 920px;
+            height: 85%;
             background: var(--bg-color);
             border: 4px solid var(--border-color);
             box-shadow: 10px 10px 0 var(--border-color);
             padding: 20px;
             overflow-y: auto;
+            box-sizing: border-box;
             background-image: repeating-linear-gradient(transparent, transparent 31px, var(--line-color) 31px, var(--line-color) 32px);
+        }
+        .rank-reg-box {
+            background: #fff;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 18px;
+        }
+        .rank-reg-inputs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .rank-reg-inputs input {
+            width: 65px;
+            padding: 6px;
+            font-size: 1.1rem;
+            text-align: center;
+            border: 2px solid var(--border-color);
+            border-radius: 5px;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .rank-my-stats {
+            font-size: 0.95rem;
+            color: #34495e;
+            background: #f4f6f7;
+            padding: 8px 12px;
+            border-radius: 6px;
+            line-height: 1.6;
+            word-break: keep-all;
+        }
+        .rank-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            background: #fff;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+        }
+        .rank-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .rank-table th, .rank-table td {
+            padding: 9px 7px;
+            border-bottom: 1px solid #e0e6ed;
+        }
+        .rank-table th {
+            background: #34495e;
+            color: #fff;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+        .rank-table tr:nth-child(even) {
+            background: #f9fafb;
         }
         .ranking-item {
             display: flex;
@@ -784,11 +846,43 @@
 
     <!-- Ranking Modal -->
     <div id="ranking-modal">
-        <h2 style="font-size: 3rem; margin-bottom: 20px; background:#fff; padding:0 20px; border:3px solid #333; text-align:center;">🏆 명예의 전당 🏆</h2>
+        <h2 style="font-size: 2.4rem; margin: 10px 0; background:#fff; padding:4px 20px; border:3px solid #333; text-align:center;">🏆 명예의 전당 🏆</h2>
         <div id="ranking-content">
-            <div id="ranking-content-list"></div>
+            <div class="rank-reg-box">
+                <div style="font-weight:bold; font-size:1.15rem; margin-bottom:10px; text-align:center; color:var(--info);">📝 내 기록 랭킹 등록 (학년·반·번호 입력)</div>
+                <div class="rank-reg-inputs">
+                    <input type="number" id="rank-grade" min="1" max="3" placeholder="학년"> <span>학년</span>
+                    <input type="number" id="rank-class" min="1" max="20" placeholder="반"> <span>반</span>
+                    <input type="number" id="rank-number" min="1" max="50" placeholder="번호"> <span>번</span>
+                    <button id="btn-submit-rank" onclick="handleRegisterRanking()" style="font-size:1.05rem; padding:8px 16px; background:#27ae60; color:#fff; border:2px solid #1e8449; box-shadow:2px 2px 0 #1e8449;">기록 등록</button>
+                    <button onclick="refreshRankings()" style="font-size:1.05rem; padding:8px 12px; background:#3498db; color:#fff; border:2px solid #2980b9; box-shadow:2px 2px 0 #2980b9;">🔄 새로고침</button>
+                </div>
+                <div id="rank-my-stats" class="rank-my-stats"></div>
+            </div>
+            <div class="rank-table-wrap">
+                <table class="rank-table">
+                    <thead>
+                        <tr>
+                            <th>순위</th>
+                            <th>학번</th>
+                            <th>최고 Lv</th>
+                            <th>강화</th>
+                            <th>대성공</th>
+                            <th>성공</th>
+                            <th>유지</th>
+                            <th>실패</th>
+                            <th>파괴</th>
+                            <th>푼 문제</th>
+                            <th>공짜 클릭</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ranking-table-body">
+                        <tr><td colspan="11" style="padding:20px; color:#7f8c8d;">랭킹 데이터를 불러오는 중...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <button onclick="document.getElementById('ranking-modal').style.display='none'" style="margin-top:20px; padding: 10px 40px;">닫기</button>
+        <button onclick="document.getElementById('ranking-modal').style.display='none'" style="margin-top:12px; padding: 8px 40px;">닫기</button>
     </div>
 
     <!-- Quiz Modal -->
@@ -854,6 +948,7 @@
             <div class="btn-group">
                 <button onclick="saveToInventory()">인벤토리에 보관</button>
                 <button onclick="openDictionary()">도감 보기</button>
+                <button onclick="openRankingModal()" style="background:#ffeaa7;">🏆 랭킹</button>
             </div>
             
             <!-- Inventory -->
@@ -1322,6 +1417,16 @@
         let unlockedLevels = new Set([0]);
         let sacrificedLevel = 0;
         let totalCorrectAnswers = 0;
+        let playerStats = {
+            enhanceCount: 0,
+            greatCount: 0,
+            successCount: 0,
+            maintainCount: 0,
+            failCount: 0,
+            destroyCount: 0,
+            problemsSolved: 0,
+            freeGoldClicks: 0
+        };
         let unlockedTiers = new Set();
         let solvedRequiredQs = new Set();
         const TIER_GATES = [
@@ -1729,6 +1834,7 @@
             quizAttempts++;
 
             if (isCorrect) {
+                playerStats.problemsSolved++;
                 let reward = 250;
                 let mult = Math.max(1, sacrificedLevel / 10);
                 reward = Math.round(reward * mult * 10) / 10;
@@ -1983,6 +2089,7 @@
 
         function earnFreeGold() {
             if (totalCorrectAnswers < 10) return;
+            playerStats.freeGoldClicks++;
             let mult = Math.max(1, sacrificedLevel / 10);
             let rand = Math.random();
             
@@ -2279,13 +2386,14 @@
         function resolveResult() {
             currentLevel = targetLevel;
             unlockedLevels.add(currentLevel);
+            playerStats.enhanceCount++;
             
-            if (hitEffectResult === 'GREAT') addLog(`[대성공] 엄청난 섬광! Lv.${currentLevel} 달성!`, 'c-s');
-            else if (hitEffectResult === 'SUCCESS') addLog(`[성공] 탕! Lv.${currentLevel} 달성!`, 'c-s');
-            else if (hitEffectResult === 'MAINTAIN') addLog(`[유지] 변화가 없습니다.`, 'c-m');
-            else if (hitEffectResult === 'FAIL') addLog(`[실패] 아차! 등급이 하락했습니다. Lv.${currentLevel}`, 'c-f');
-            else if (hitEffectResult === 'DOWNGRADE') addLog(`[파괴 완화] 파괴 대신 10단계 하락했습니다! Lv.${currentLevel}`, 'c-f');
-            else if (hitEffectResult === 'DESTROY') addLog(`[파괴] 검이 산산조각 났습니다...`, 'c-d');
+            if (hitEffectResult === 'GREAT') { playerStats.greatCount++; addLog(`[대성공] 엄청난 섬광! Lv.${currentLevel} 달성!`, 'c-s'); }
+            else if (hitEffectResult === 'SUCCESS') { playerStats.successCount++; addLog(`[성공] 탕! Lv.${currentLevel} 달성!`, 'c-s'); }
+            else if (hitEffectResult === 'MAINTAIN') { playerStats.maintainCount++; addLog(`[유지] 변화가 없습니다.`, 'c-m'); }
+            else if (hitEffectResult === 'FAIL') { playerStats.failCount++; addLog(`[실패] 아차! 등급이 하락했습니다. Lv.${currentLevel}`, 'c-f'); }
+            else if (hitEffectResult === 'DOWNGRADE') { playerStats.destroyCount++; addLog(`[파괴 완화] 파괴 대신 10단계 하락했습니다! Lv.${currentLevel}`, 'c-f'); }
+            else if (hitEffectResult === 'DESTROY') { playerStats.destroyCount++; addLog(`[파괴] 검이 산산조각 났습니다...`, 'c-d'); }
             
             if (!isFever) {
                 if (hitEffectResult === 'MAINTAIN') {
@@ -2839,6 +2947,75 @@
         document.addEventListener('fullscreenchange', updateFullscreenBtn);
         document.addEventListener('webkitfullscreenchange', updateFullscreenBtn);
 
+        /** --- 랭킹 시스템 UI 로직 --- */
+        function getCurrentRankingPayload() {
+            const maxLevel = Math.max(0, currentLevel, ...Array.from(unlockedLevels));
+            return {
+                maxLevel,
+                enhanceCount: playerStats.enhanceCount,
+                greatCount: playerStats.greatCount,
+                successCount: playerStats.successCount,
+                maintainCount: playerStats.maintainCount,
+                failCount: playerStats.failCount,
+                destroyCount: playerStats.destroyCount,
+                problemsSolved: playerStats.problemsSolved,
+                freeGoldClicks: playerStats.freeGoldClicks
+            };
+        }
+
+        function updateMyStatsPreview() {
+            const s = getCurrentRankingPayload();
+            const el = document.getElementById('rank-my-stats');
+            if (el) {
+                el.innerHTML = `<strong>내 현재 기록:</strong> 최고 <strong>Lv.${s.maxLevel}</strong> | 강화 ${s.enhanceCount}회 (대성공 ${s.greatCount} / 성공 ${s.successCount} / 유지 ${s.maintainCount} / 실패 ${s.failCount} / 파괴 ${s.destroyCount}) | 푼 문제 ${s.problemsSolved}개 | 공짜 돈벌기 ${s.freeGoldClicks}회`;
+            }
+        }
+
+        function openRankingModal() {
+            updateMyStatsPreview();
+            document.getElementById('ranking-modal').style.display = 'flex';
+            refreshRankings();
+        }
+
+        async function refreshRankings() {
+            const tbody = document.getElementById('ranking-table-body');
+            if (typeof window.loadFirebaseRankings !== 'function') {
+                tbody.innerHTML = '<tr><td colspan="11" style="padding:20px; color:#c0392b;">Firebase 연결을 초기화하는 중입니다. 잠시 후 다시 시도하세요.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = '<tr><td colspan="11" style="padding:20px; color:#7f8c8d;">⏳ 랭킹 불러오는 중...</td></tr>';
+            await window.loadFirebaseRankings();
+        }
+
+        async function handleRegisterRanking() {
+            const grade = parseInt(document.getElementById('rank-grade').value, 10);
+            const classNum = parseInt(document.getElementById('rank-class').value, 10);
+            const number = parseInt(document.getElementById('rank-number').value, 10);
+
+            if (!grade || !classNum || !number || grade < 1 || classNum < 1 || number < 1) {
+                alert("학년, 반, 번호를 올바르게 입력해 주세요!");
+                return;
+            }
+            if (typeof window.submitFirebaseRanking !== 'function') {
+                alert("Firebase가 아직 준비되지 않았습니다.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit-rank');
+            btn.disabled = true;
+            btn.innerText = '등록 중...';
+            try {
+                await window.submitFirebaseRanking(grade, classNum, number, getCurrentRankingPayload());
+                alert(`${grade}학년 ${classNum}반 ${number}번 기록이 랭킹에 등록되었습니다!`);
+                await refreshRankings();
+            } catch (e) {
+                alert("랭킹 등록 중 오류가 발생했습니다: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '기록 등록';
+            }
+        }
+
         // Initialize
         window.onload = function() {
             initQuizSelector();
@@ -2854,73 +3031,84 @@
         };
     </script>
 
-    <!-- 클라우드 저장 모듈 -->
+    <!-- Firebase 실시간 랭킹 모듈 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const firebaseConfig = {
+            apiKey: "AIzaSyAWmMqwv3felLODWbx7k2JG3-Nyu6xa0Rc",
+            authDomain: "sowrd-ranking-data.firebaseapp.com",
+            projectId: "sowrd-ranking-data",
+            storageBucket: "sowrd-ranking-data.firebasestorage.app",
+            messagingSenderId: "638385408062",
+            appId: "1:638385408062:web:9fd5f31cab2d603567696f"
+        };
 
-        if (firebaseConfig && Object.keys(firebaseConfig).length > 0) {
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-            const initAuth = async () => {
-                try {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                } catch (error) {
-                    console.error("Cloud Authentication Error:", error);
-                }
-            };
-
-            initAuth();
-
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    window.currentUserUid = user.uid;
-                    await loadDataFromCloud();
-                }
+        window.submitFirebaseRanking = async (grade, classNum, number, stats) => {
+            const docId = `${grade}-${classNum}-${number}`;
+            const docRef = doc(db, 'rankings', docId);
+            await setDoc(docRef, {
+                grade,
+                classNum,
+                number,
+                label: `${grade}학년 ${classNum}반 ${number}번`,
+                maxLevel: stats.maxLevel,
+                enhanceCount: stats.enhanceCount,
+                greatCount: stats.greatCount,
+                successCount: stats.successCount,
+                maintainCount: stats.maintainCount,
+                failCount: stats.failCount,
+                destroyCount: stats.destroyCount,
+                problemsSolved: stats.problemsSolved,
+                freeGoldClicks: stats.freeGoldClicks,
+                updatedAt: Date.now()
             });
+        };
 
-            async function loadDataFromCloud() {
-                if (!db || !window.currentUserUid) return;
-                const docRef = doc(db, 'artifacts', appId, 'users', window.currentUserUid, 'saveData', 'slot1');
-                try {
-                    const snap = await getDoc(docRef);
-                    if (snap.exists() && typeof window.applyLoadedState === 'function') {
-                        window.applyLoadedState(snap.data());
-                    }
-                } catch (error) {
-                    console.error("Failed to load game state:", error);
+        window.loadFirebaseRankings = async () => {
+            const tbody = document.getElementById('ranking-table-body');
+            try {
+                const snap = await getDocs(collection(db, 'rankings'));
+                const list = [];
+                snap.forEach(d => list.push(d.data()));
+
+                // 정렬: 최고 레벨 내림차순 -> 푼 문제 수 내림차순 -> 강화 횟수 오름차순
+                list.sort((a, b) => {
+                    if ((b.maxLevel ?? 0) !== (a.maxLevel ?? 0)) return (b.maxLevel ?? 0) - (a.maxLevel ?? 0);
+                    if ((b.problemsSolved ?? 0) !== (a.problemsSolved ?? 0)) return (b.problemsSolved ?? 0) - (a.problemsSolved ?? 0);
+                    return (a.enhanceCount ?? 0) - (b.enhanceCount ?? 0);
+                });
+
+                if (list.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="11" style="padding:20px; color:#7f8c8d;">아직 등록된 랭킹이 없습니다. 첫 번째로 등록해 보세요!</td></tr>';
+                    return;
                 }
+
+                tbody.innerHTML = list.map((r, idx) => {
+                    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}`;
+                    return `<tr>
+                        <td style="font-weight:bold;">${medal}</td>
+                        <td style="font-weight:bold; color:#2c3e50;">${r.label || `${r.grade}-${r.classNum}-${r.number}`}</td>
+                        <td style="font-weight:bold; color:#e74c3c;">Lv.${r.maxLevel ?? 0}</td>
+                        <td>${r.enhanceCount ?? 0}</td>
+                        <td style="color:#27ae60;">${r.greatCount ?? 0}</td>
+                        <td style="color:#2980b9;">${r.successCount ?? 0}</td>
+                        <td>${r.maintainCount ?? 0}</td>
+                        <td style="color:#e67e22;">${r.failCount ?? 0}</td>
+                        <td style="color:#c0392b;">${r.destroyCount ?? 0}</td>
+                        <td style="font-weight:bold;">${r.problemsSolved ?? 0}</td>
+                        <td>${r.freeGoldClicks ?? 0}</td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="11" style="padding:20px; color:#c0392b;">랭킹 불러오기 실패 (Firestore 보안 규칙을 확인해 주세요)</td></tr>`;
             }
-
-            window.saveGameState = async () => {
-                if (!db || !window.currentUserUid || typeof window.getGameState !== 'function') return;
-                const state = window.getGameState();
-                const privateDocRef = doc(db, 'artifacts', appId, 'users', window.currentUserUid, 'saveData', 'slot1');
-                const publicDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', window.currentUserUid);
-                try {
-                    await setDoc(privateDocRef, state);
-                    await setDoc(publicDocRef, {
-                        uid: window.currentUserUid,
-                        level: state.currentLevel,
-                        gold: state.gold,
-                        timestamp: Date.now()
-                    });
-                    if (typeof window.showSaveIndicator === 'function') window.showSaveIndicator();
-                } catch (error) {
-                    console.error("Failed to save game state:", error);
-                }
-            };
-        }
+        };
     </script>
 </body>
 </html>
