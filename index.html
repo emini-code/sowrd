@@ -2461,6 +2461,7 @@
         function drawEffect(ctx, cx, cy, type) {
             ctx.save();
             ctx.translate(cx, cy);
+            ctx.scale(2, 2);
             ctx.lineCap = 'round';
             const j = (val) => (Math.random() - 0.5) * val;
             
