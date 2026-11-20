@@ -844,6 +844,9 @@
                     <button class="item-btn" id="btn-item-protect" onclick="toggleItem('protect')">
                         장비 파괴 보호권 (파괴 방지, ~35단계) <span class="item-count" id="count-protect">남은 수량: 3</span>
                     </button>
+                    <button class="item-btn" id="btn-item-downgrade" onclick="toggleItem('downgrade')">
+                        파괴 완화권 (파괴 시 -10단계, Lv.15+) <span class="item-count" id="count-downgrade">남은 수량: 0</span>
+                    </button>
                 </div>
             </div>
 
@@ -890,6 +893,17 @@
                             <button class="shop-btn" onclick="buyItem('protect', 5000, 1)">1개 구매</button>
                             <button class="shop-btn" onclick="buyItem('protect', 5000, 5)">5개 구매</button>
                             <button class="shop-btn" onclick="buyItem('protect', 5000, 10)">10개 구매</button>
+                        </div>
+                    </div>
+                    <div class="shop-item-card">
+                        <div class="shop-item-header">
+                            <span>파괴 완화권 (Lv.15+, 파괴 시 -10)</span>
+                            <span class="shop-item-price">개당 1000G</span>
+                        </div>
+                        <div class="shop-buy-row">
+                            <button class="shop-btn" onclick="buyItem('downgrade', 1000, 1)">1개 구매</button>
+                            <button class="shop-btn" onclick="buyItem('downgrade', 1000, 5)">5개 구매</button>
+                            <button class="shop-btn" onclick="buyItem('downgrade', 1000, 10)">10개 구매</button>
                         </div>
                     </div>
                 </div>
@@ -1273,8 +1287,8 @@
         let isRequiredQuiz = false;
         let pendingUnlockTier = null;
         
-        let items = { success: 3, fail: 3, protect: 3 };
-        let activeItems = { success: false, fail: false, protect: false };
+        let items = { success: 3, fail: 3, protect: 3, downgrade: 0 };
+        let activeItems = { success: false, fail: false, protect: false, downgrade: false };
         
         let isAnimating = false;
         let lastTime = 0;
@@ -1331,7 +1345,7 @@
             gold = state.gold ?? 0;
             inventory = state.inventory ?? [null, null, null];
             unlockedLevels = new Set(state.unlockedLevels ?? [0]);
-            items = state.items ?? { success: 3, fail: 3, protect: 3 };
+            items = { success: 3, fail: 3, protect: 3, downgrade: 0, ...(state.items ?? {}) };
             sacrificedLevel = state.sacrificedLevel ?? 0;
             totalCorrectAnswers = state.totalCorrectAnswers ?? 0;
             recentQuestions = state.recentQuestions ?? [];
@@ -1944,7 +1958,8 @@
             const itemNames = {
                 success: "성공 확률 증가 물약",
                 fail: "실패 확률 감소 물약",
-                protect: "장비 파괴 보호권"
+                protect: "장비 파괴 보호권",
+                downgrade: "파괴 완화권"
             };
             if (gold >= totalPrice) {
                 gold -= totalPrice;
@@ -1970,6 +1985,10 @@
                     addLog("🚫 36단계 이상에서는 파괴 보호권을 사용할 수 없습니다!", "c-d");
                     return;
                 }
+                if (type === 'downgrade' && currentLevel < 15) {
+                    addLog("🚫 파괴 완화권은 15레벨 검을 강화할 때부터 사용할 수 있습니다!", "c-d");
+                    return;
+                }
             }
             activeItems[type] = !activeItems[type];
             updateItemUI();
@@ -1977,7 +1996,7 @@
         }
 
         function updateItemUI() {
-            ['success', 'fail', 'protect'].forEach(type => {
+            ['success', 'fail', 'protect', 'downgrade'].forEach(type => {
                 const btn = document.getElementById(`btn-item-${type}`);
                 const countSpan = document.getElementById(`count-${type}`);
                 countSpan.innerText = `남은 수량: ${items[type]}`;
@@ -2099,7 +2118,13 @@
             } else if (rand < p.great + p.success + p.maintain + p.fail) {
                 hitEffectResult = 'FAIL'; targetLevel = Math.max(0, currentLevel - 1);
             } else {
-                hitEffectResult = 'DESTROY'; targetLevel = 0;
+                if (activeItems.downgrade && currentLevel >= 15) {
+                    hitEffectResult = 'DOWNGRADE';
+                    targetLevel = Math.max(0, currentLevel - 10);
+                } else {
+                    hitEffectResult = 'DESTROY';
+                    targetLevel = 0;
+                }
             }
 
             if (activeItems.success) { 
@@ -2113,6 +2138,10 @@
             if (activeItems.protect && currentLevel < 36) { 
                 items.protect--; 
                 if (items.protect <= 0) { activeItems.protect = false; addLog("보호권을 모두 소모했습니다.", "c-f"); }
+            }
+            if (activeItems.downgrade && currentLevel >= 15) {
+                items.downgrade--;
+                if (items.downgrade <= 0) { activeItems.downgrade = false; addLog("파괴 완화권을 모두 소모했습니다.", "c-f"); }
             }
             if (activeBuff) {
                 activeBuff = null;
@@ -2133,6 +2162,7 @@
             else if (hitEffectResult === 'SUCCESS') addLog(`[성공] 탕! Lv.${currentLevel} 달성!`, 'c-s');
             else if (hitEffectResult === 'MAINTAIN') addLog(`[유지] 변화가 없습니다.`, 'c-m');
             else if (hitEffectResult === 'FAIL') addLog(`[실패] 아차! 등급이 하락했습니다. Lv.${currentLevel}`, 'c-f');
+            else if (hitEffectResult === 'DOWNGRADE') addLog(`[파괴 완화] 파괴 대신 10단계 하락했습니다! Lv.${currentLevel}`, 'c-f');
             else if (hitEffectResult === 'DESTROY') addLog(`[파괴] 검이 산산조각 났습니다...`, 'c-d');
             
             if (!isFever) {
@@ -2155,6 +2185,11 @@
             if (currentLevel >= 36 && activeItems.protect) {
                 activeItems.protect = false;
                 addLog("⚠️ 36단계에 도달하여 파괴 보호권이 강제로 해제됩니다!", "c-d");
+                updateItemUI();
+            }
+            if (currentLevel < 15 && activeItems.downgrade) {
+                activeItems.downgrade = false;
+                addLog("⚠️ 15단계 미만이 되어 파괴 완화권이 자동으로 해제되었습니다.", "c-m");
                 updateItemUI();
             }
 
@@ -2361,7 +2396,7 @@
             } else if (type === 'SUCCESS') {
                 ctx.strokeStyle = '#e67e22'; ctx.lineWidth = 2;
                 for(let i=0; i<8; i++){ ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(j(80), j(80)); ctx.stroke(); }
-            } else if (type === 'FAIL') {
+            } else if (type === 'FAIL' || type === 'DOWNGRADE') {
                 ctx.strokeStyle = '#7f8c8d'; ctx.lineWidth = 3;
                 for(let i=0; i<8; i++){
                     ctx.beginPath(); const startX = j(80), startY = j(40) - 20;
