@@ -750,7 +750,7 @@
             <div id="tutorial-box">
                 <h2>📜 게임 방법 안내</h2>
                 <ul>
-                    <li><strong>강화하기:</strong> [망치질 하기!] 버튼을 눌러 50G를 소모해 검을 최대 40단계까지 강화하세요.</li>
+                    <li><strong>강화하기:</strong> [망치질 하기!] 버튼을 눌러 구간별 골드(0~10강 50G / 11~20강 100G / 21~30강 200G / 31강 이상 500G)를 소모해 검을 최대 40단계까지 강화하세요.</li>
                     <li><strong>필수 문제 &amp; 구간 해금:</strong> 게임 시작 시 필수 문제를 모두 맞히면 강화가 해금되고 <strong>500G</strong>를 획득합니다. (오답 시 1번 문제부터 처음부터 다시 풀이) 이후 5·10단계(하), 15·20단계(중), 25단계 이상(상) 구간 해금 문제를 통과해야 다음 단계로 강화할 수 있습니다. (기회 1회, 오답 시 1단계 하락)</li>
                     <li><strong>돈벌기 &amp; 퀴즈:</strong> [돈벌기] 탭에서 과학 퀴즈를 풀면 250G(배율 적용)를 얻으며, 5연속 정답 시 랜덤 버프 또는 보너스 골드를 받습니다. 퀴즈 10문제를 맞히면 [공짜로 돈벌기]가 해금됩니다.</li>
                     <li><strong>상점 &amp; 검 상점:</strong> 물약, 장비 파괴 보호권(35단계까지 파괴 방지, 3,000G), 파괴 완화권(15단계 이상, 파괴 시 -10단계, 1,000G)을 구매할 수 있으며, 최고 도달 레벨(10·20·30단계)에 따라 [검 상점]에서 해당 단계 검을 직접 구매할 수 있습니다.</li>
@@ -2162,9 +2162,27 @@
                 <li class="c-f">실패 (-1): ${p.fail.toFixed(1)}%${offerFailTag}</li>
                 <li class="c-d">파괴 (소멸): ${p.destroy.toFixed(1)}%</li>
             `;
+            updateEnhanceBtnUI();
         }
 
         /** --- ENHANCE LOGIC --- */
+        function getEnhanceCost(level = currentLevel) {
+            if (level <= 10) return 50;
+            if (level <= 20) return 100;
+            if (level <= 30) return 200;
+            return 500;
+        }
+
+        function updateEnhanceBtnUI() {
+            if (!btnEnhance) return;
+            if (isFever) {
+                btnEnhance.innerText = '🌈 피버 광클 강화! (무료)';
+            } else {
+                const cost = getEnhanceCost(currentLevel);
+                btnEnhance.innerText = `망치질 하기! (-${cost}G)`;
+            }
+        }
+
         function triggerEnhance() {
             if (getLockedGate(currentLevel)) {
                 addLog("🔒 필수 문제를 풀어야 다음 강화 구간으로 넘어갈 수 있습니다!", "c-d");
@@ -2175,11 +2193,12 @@
             if (isFever && feverCooldown > 0) return;
 
             if (!isFever) {
-                if (gold < 50) {
-                    addLog("강화에 필요한 골드가 부족합니다! (50G 필요)", "c-d");
+                const enhanceCost = getEnhanceCost(currentLevel);
+                if (gold < enhanceCost) {
+                    addLog(`강화에 필요한 골드가 부족합니다! (${enhanceCost}G 필요)`, "c-d");
                     return;
                 }
-                gold -= 50;
+                gold -= enhanceCost;
             }
             updateGoldUI();
 
