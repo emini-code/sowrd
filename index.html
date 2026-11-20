@@ -478,7 +478,27 @@
 
         /* 자동 저장 알림 인디케이터 */
         #save-indicator {
-            position: fixed; top: 20px; right: 20px; background: rgba(46, 204, 113, 0.9); color: white; padding: 10px 20px; border-radius: 30px; font-size: 1.3rem; font-weight: bold; opacity: 0; transition: opacity 0.5s ease-in-out; z-index: 3000; box-shadow: 2px 2px 0 rgba(0,0,0,0.2); pointer-events: none;
+            position: fixed; top: 70px; right: 15px; background: rgba(46, 204, 113, 0.9); color: white; padding: 10px 20px; border-radius: 30px; font-size: 1.3rem; font-weight: bold; opacity: 0; transition: opacity 0.5s ease-in-out; z-index: 3000; box-shadow: 2px 2px 0 rgba(0,0,0,0.2); pointer-events: none;
+        }
+
+        /* 우측 상단 전체화면 버튼 */
+        #fullscreen-btn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 5500;
+            font-size: 1rem;
+            font-weight: bold;
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.92);
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 2px 2px 0 var(--border-color);
+            cursor: pointer;
+        }
+        #fullscreen-btn:hover {
+            background: #f1c40f;
         }
 
         /* Title Screen */
@@ -661,6 +681,7 @@
     </style>
 </head>
 <body>
+    <button id="fullscreen-btn" onclick="toggleFullscreen()" title="전체화면 전환">⛶ 전체화면</button>
 
     <!-- Title Screen -->
     <div id="title-screen">
@@ -832,8 +853,9 @@
 
             <div>
                 <div style="display:flex; justify-content:space-between; margin-bottom: 15px;">
-                    <button id="tab-earn" onclick="switchTab('earn')" style="flex:1; font-size:1.5rem; background:#f1c40f; border:3px solid #333; border-radius:5px 0 0 5px; cursor:pointer; padding:5px; font-weight:bold;">돈벌기</button>
-                    <button id="tab-shop" onclick="switchTab('shop')" style="flex:1; font-size:1.5rem; background:#eee; border:3px solid #333; border-left:none; border-radius:0 5px 5px 0; cursor:pointer; padding:5px; font-weight:normal;">상점</button>
+                    <button id="tab-earn" onclick="switchTab('earn')" style="flex:1; font-size:1.25rem; background:#f1c40f; border:3px solid #333; border-radius:5px 0 0 5px; cursor:pointer; padding:6px 4px; font-weight:bold;">돈벌기</button>
+                    <button id="tab-shop" onclick="switchTab('shop')" style="flex:1; font-size:1.25rem; background:#eee; border:3px solid #333; border-left:none; border-radius:0; cursor:pointer; padding:6px 4px; font-weight:normal;">상점</button>
+                    <button id="tab-sword-shop" onclick="switchTab('sword-shop')" style="flex:1; font-size:1.25rem; background:#eee; border:3px solid #333; border-left:none; border-radius:0 5px 5px 0; cursor:pointer; padding:6px 4px; font-weight:normal;">검 상점</button>
                 </div>
 
                 <div id="content-shop" style="display:none; flex-direction:column; gap:10px; margin-bottom: 15px;">
@@ -869,6 +891,30 @@
                             <button class="shop-btn" onclick="buyItem('protect', 5000, 5)">5개 구매</button>
                             <button class="shop-btn" onclick="buyItem('protect', 5000, 10)">10개 구매</button>
                         </div>
+                    </div>
+                </div>
+
+                <div id="content-sword-shop" style="display:none; flex-direction:column; gap:10px; margin-bottom: 15px;">
+                    <div class="shop-item-card">
+                        <div class="shop-item-header">
+                            <span>🗡️ 10레벨 검 (화염검)</span>
+                            <span class="shop-item-price">1,500G</span>
+                        </div>
+                        <button id="btn-buy-sword-10" class="shop-btn" onclick="buySword(10, 1500)" disabled>🔒 Lv.10 도달 시 해금</button>
+                    </div>
+                    <div class="shop-item-card">
+                        <div class="shop-item-header">
+                            <span>🗡️ 20레벨 검 (포세이돈 삼지창)</span>
+                            <span class="shop-item-price">10,000G</span>
+                        </div>
+                        <button id="btn-buy-sword-20" class="shop-btn" onclick="buySword(20, 10000)" disabled>🔒 Lv.20 도달 시 해금</button>
+                    </div>
+                    <div class="shop-item-card">
+                        <div class="shop-item-header">
+                            <span>🗡️ 30레벨 검 (천사 날개검)</span>
+                            <span class="shop-item-price">50,000G</span>
+                        </div>
+                        <button id="btn-buy-sword-30" class="shop-btn" onclick="buySword(30, 50000)" disabled>🔒 Lv.30 도달 시 해금</button>
                     </div>
                 </div>
 
@@ -1297,6 +1343,7 @@
             updateInventoryUI();
             updateMultiplierUI();
             updateTierLockUI();
+            updateSwordShopUI();
             addLog("☁️ 클라우드에서 게임 정보를 성공적으로 불러왔습니다!", "c-s");
         };
 
@@ -1749,26 +1796,71 @@
         }
 
         function switchTab(tab) {
-            const tabShop = document.getElementById('tab-shop');
-            const tabEarn = document.getElementById('tab-earn');
-            const contentShop = document.getElementById('content-shop');
-            const contentEarn = document.getElementById('content-earn');
+            const tabs = {
+                earn: { btn: document.getElementById('tab-earn'), content: document.getElementById('content-earn') },
+                shop: { btn: document.getElementById('tab-shop'), content: document.getElementById('content-shop') },
+                'sword-shop': { btn: document.getElementById('tab-sword-shop'), content: document.getElementById('content-sword-shop') }
+            };
 
-            if (tab === 'shop') {
-                contentShop.style.display = 'flex';
-                contentEarn.style.display = 'none';
-                tabShop.style.background = '#f1c40f';
-                tabShop.style.fontWeight = 'bold';
-                tabEarn.style.background = '#eee';
-                tabEarn.style.fontWeight = 'normal';
-            } else {
-                contentShop.style.display = 'none';
-                contentEarn.style.display = 'flex';
-                tabEarn.style.background = '#f1c40f';
-                tabEarn.style.fontWeight = 'bold';
-                tabShop.style.background = '#eee';
-                tabShop.style.fontWeight = 'normal';
+            Object.keys(tabs).forEach(key => {
+                const isActive = (key === tab);
+                tabs[key].content.style.display = isActive ? 'flex' : 'none';
+                tabs[key].btn.style.background = isActive ? '#f1c40f' : '#eee';
+                tabs[key].btn.style.fontWeight = isActive ? 'bold' : 'normal';
+            });
+
+            if (tab === 'sword-shop') updateSwordShopUI();
+        }
+
+        function updateSwordShopUI() {
+            const maxReached = Math.max(0, currentLevel, ...Array.from(unlockedLevels));
+            [
+                { lvl: 10, price: 1500 },
+                { lvl: 20, price: 10000 },
+                { lvl: 30, price: 50000 }
+            ].forEach(item => {
+                const btn = document.getElementById(`btn-buy-sword-${item.lvl}`);
+                if (!btn) return;
+                if (maxReached >= item.lvl) {
+                    btn.disabled = false;
+                    btn.innerText = `구매하기 (${item.price.toLocaleString()}G)`;
+                    btn.style.background = '#fdfbf7';
+                    btn.style.color = '#2c3e50';
+                } else {
+                    btn.disabled = true;
+                    btn.innerText = `🔒 Lv.${item.lvl} 도달 시 해금 (현재 최고 Lv.${maxReached})`;
+                    btn.style.background = '#ecf0f1';
+                    btn.style.color = '#7f8c8d';
+                }
+            });
+        }
+
+        function buySword(targetLvl, price) {
+            if (isAnimating) return;
+            const maxReached = Math.max(0, currentLevel, ...Array.from(unlockedLevels));
+            if (maxReached < targetLvl) {
+                addLog(`🔒 Lv.${targetLvl}에 도달해야 구매할 수 있습니다!`, "c-d");
+                return;
             }
+            if (currentLevel >= targetLvl) {
+                addLog(`현재 장착 중인 검(Lv.${currentLevel})이 Lv.${targetLvl} 이상입니다. 인벤토리에 보관 후 구매하세요.`, "c-f");
+                return;
+            }
+            if (gold < price) {
+                addLog(`골드가 부족합니다! (${price.toLocaleString()}G 필요)`, "c-d");
+                return;
+            }
+
+            gold -= price;
+            gold = Math.round(gold * 10) / 10;
+            currentLevel = targetLvl;
+            unlockedLevels.add(targetLvl);
+            updateGoldUI();
+            updateProbUI();
+            updateTierLockUI();
+            updateSwordShopUI();
+            addLog(`🗡️ 검 상점에서 Lv.${targetLvl} ${getSwordName(targetLvl)}을(를) 구매했습니다! (-${price.toLocaleString()}G)`, "c-s");
+            triggerAutoSave();
         }
 
         function updateMultiplierUI() {
@@ -2068,6 +2160,7 @@
 
             updateProbUI();
             updateTierLockUI();
+            updateSwordShopUI();
             triggerAutoSave();
         }
 
@@ -2496,6 +2589,39 @@
             if (titleScreen) titleScreen.style.display = 'none';
         }
 
+        /** --- 전체화면 전환 로직 --- */
+        function toggleFullscreen() {
+            const doc = document;
+            const docEl = doc.documentElement;
+            const isFs = doc.fullscreenElement || doc.webkitFullscreenElement;
+
+            if (!isFs) {
+                if (docEl.requestFullscreen) {
+                    docEl.requestFullscreen().catch(() => {});
+                } else if (docEl.webkitRequestFullscreen) {
+                    docEl.webkitRequestFullscreen();
+                } else {
+                    alert("현재 브라우저에서는 전체화면 기능을 지원하지 않습니다.");
+                }
+            } else {
+                if (doc.exitFullscreen) {
+                    doc.exitFullscreen().catch(() => {});
+                } else if (doc.webkitExitFullscreen) {
+                    doc.webkitExitFullscreen();
+                }
+            }
+        }
+
+        function updateFullscreenBtn() {
+            const btn = document.getElementById('fullscreen-btn');
+            if (!btn) return;
+            const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+            btn.innerText = isFs ? '↙ 창모드' : '⛶ 전체화면';
+        }
+
+        document.addEventListener('fullscreenchange', updateFullscreenBtn);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenBtn);
+
         // Initialize
         window.onload = function() {
             initQuizSelector();
@@ -2505,6 +2631,7 @@
             updateInventoryUI();
             updateMultiplierUI();
             updateTierLockUI();
+            updateSwordShopUI();
             requestAnimationFrame(gameLoop);
             addLog("⚔️ 검강화게임에 오신 것을 환영합니다! 0단계 필수 문제를 풀고 강화를 시작해 보세요.", "c-info");
         };
