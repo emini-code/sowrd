@@ -365,11 +365,13 @@
             box-sizing: border-box;
         }
         #quiz-content {
-            width: 100%;
-            max-width: 500px;
+            width: 95%;
+            max-width: 740px;
+            max-height: 90vh;
+            overflow-y: auto;
             background: var(--bg-color);
             border: 4px solid var(--border-color);
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 25px;
             text-align: center;
             background-image: repeating-linear-gradient(transparent, transparent 31px, var(--line-color) 31px, var(--line-color) 32px);
@@ -388,6 +390,34 @@
         .quiz-btn:active { transform: scale(0.95); }
         #quiz-choices button {
             display: block; width: 100%; margin: 10px 0; text-align: left; padding-left: 20px; box-sizing: border-box;
+        }
+        @media (min-width: 700px) {
+            #quiz-content {
+                padding: 36px 40px;
+            }
+            #quiz-title {
+                font-size: 2.3rem !important;
+                padding: 8px 28px !important;
+            }
+            #quiz-info-msg {
+                font-size: 1.05rem !important;
+            }
+            #quiz-question {
+                font-size: 1.65rem !important;
+                padding: 16px !important;
+                line-height: 1.5;
+            }
+            .quiz-btn {
+                font-size: 1.35rem;
+                padding: 14px 24px;
+            }
+            #quiz-answer-input {
+                font-size: 1.35rem !important;
+                padding: 10px !important;
+            }
+            #quiz-result-message {
+                font-size: 1.35rem !important;
+            }
         }
 
         /* Custom Alert Modal */
@@ -1525,7 +1555,33 @@
             const inputArea = document.getElementById('quiz-input-area');
             const choicesArea = document.getElementById('quiz-choices');
 
-            if (currentQuiz.difficulty === 'easy') {
+            // c1, c2, c3, ... 개수 제한 없이 동적으로 모든 보기 수집 (2개, 4개, 6개 이상 모두 지원)
+            const choiceKeys = Object.keys(currentQuiz)
+                .filter(k => /^c\d+$/i.test(k) && currentQuiz[k] !== undefined && currentQuiz[k] !== null && String(currentQuiz[k]).trim() !== '')
+                .sort((a, b) => parseInt(a.slice(1), 10) - parseInt(b.slice(1), 10));
+
+            let choicesList = choiceKeys.map(k => ({
+                origNum: String(parseInt(k.slice(1), 10)),
+                text: currentQuiz[k]
+            }));
+
+            if (choicesList.length > 0) {
+                inputArea.style.display = 'none';
+                choicesArea.style.display = 'block';
+
+                if (choicesList.length >= 3) {
+                    for (let i = choicesList.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [choicesList[i], choicesList[j]] = [choicesList[j], choicesList[i]];
+                    }
+                }
+
+                let choicesHTML = '';
+                choicesList.forEach((choice, idx) => {
+                    choicesHTML += `<button class="quiz-btn" onclick="submitMultipleChoice('${choice.origNum}')">${idx + 1}. ${choice.text}</button>`;
+                });
+                choicesArea.innerHTML = choicesHTML;
+            } else {
                 const isOX = (currentQuiz.a.toUpperCase() === 'O' || currentQuiz.a.toUpperCase() === 'X');
                 if (isOX) {
                     inputArea.style.display = 'none';
@@ -1542,27 +1598,6 @@
                     document.getElementById('quiz-answer-input').value = '';
                     setTimeout(() => document.getElementById('quiz-answer-input').focus(), 100);
                 }
-            } else {
-                inputArea.style.display = 'none';
-                choicesArea.style.display = 'block';
-                
-                let choicesList = [];
-                for(let i=1; i<=5; i++) {
-                    if(currentQuiz['c'+i]) choicesList.push({ origNum: String(i), text: currentQuiz['c'+i] });
-                }
-
-                if (choicesList.length >= 3) {
-                    for (let i = choicesList.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [choicesList[i], choicesList[j]] = [choicesList[j], choicesList[i]];
-                    }
-                }
-
-                let choicesHTML = '';
-                choicesList.forEach((choice, idx) => {
-                    choicesHTML += `<button class="quiz-btn" onclick="submitMultipleChoice('${choice.origNum}')">${idx + 1}. ${choice.text}</button>`;
-                });
-                choicesArea.innerHTML = choicesHTML;
             }
         }
 
