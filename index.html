@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- 검강화게임 v33 -->
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -417,6 +418,29 @@
             line-height: 1.6;
             word-break: keep-all;
         }
+        .rank-filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        .rank-filter-btn {
+            font-size: 0.92rem;
+            font-weight: bold;
+            padding: 5px 12px;
+            background: #fff;
+            color: #2c3e50;
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 2px 2px 0 var(--border-color);
+            cursor: pointer;
+        }
+        .rank-filter-btn.active {
+            background: #f1c40f;
+            color: #2c3e50;
+        }
         .rank-table-wrap {
             width: 100%;
             overflow-x: auto;
@@ -649,6 +673,21 @@
         #sound-btn:hover {
             background: #f1c40f;
         }
+        #version-badge {
+            position: fixed;
+            bottom: 10px;
+            right: 12px;
+            z-index: 5600;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #7f8c8d;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1.5px solid #bdc3c7;
+            border-radius: 12px;
+            padding: 2px 10px;
+            pointer-events: none;
+            user-select: none;
+        }
 
         /* Title Screen */
         #title-screen {
@@ -837,6 +876,7 @@
 <body>
     <button id="sound-btn" onclick="toggleSound()" title="효과음 켜기/끄기">🔊 효과음</button>
     <button id="fullscreen-btn" onclick="toggleFullscreen()" title="전체화면 전환">⛶ 전체화면</button>
+    <div id="version-badge">v33</div>
 
     <!-- Title Screen -->
     <div id="title-screen">
@@ -907,12 +947,14 @@
                 </div>
                 <div id="rank-my-stats" class="rank-my-stats"></div>
             </div>
+            <div id="rank-version-filter-bar" class="rank-filter-bar"></div>
             <div class="rank-table-wrap">
                 <table class="rank-table">
                     <thead>
                         <tr>
                             <th>순위</th>
                             <th>학번</th>
+                            <th>버전</th>
                             <th>최고 Lv</th>
                             <th>강화</th>
                             <th>대성공</th>
@@ -926,7 +968,7 @@
                         </tr>
                     </thead>
                     <tbody id="ranking-table-body">
-                        <tr><td colspan="12" style="padding:20px; color:#7f8c8d;">랭킹 데이터를 불러오는 중...</td></tr>
+                        <tr><td colspan="13" style="padding:20px; color:#7f8c8d;">랭킹 데이터를 불러오는 중...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1154,6 +1196,9 @@
     </div>
 
     <script>
+        /** --- 게임 버전 정보 --- */
+        const GAME_VERSION = 'v33';
+
         /** --- 자동 탐색된 퀴즈 파일 목록 --- */
         let QUIZ_FILES = [];
         let selectedQuizFiles = [];
@@ -3193,7 +3238,8 @@
                 destroyCount: playerStats.destroyCount,
                 problemsSolved: playerStats.problemsSolved,
                 freeGoldClicks: playerStats.freeGoldClicks,
-                itemsUsed: playerStats.itemsUsed
+                itemsUsed: playerStats.itemsUsed,
+                version: GAME_VERSION
             };
         }
 
@@ -3201,7 +3247,7 @@
             const s = getCurrentRankingPayload();
             const el = document.getElementById('rank-my-stats');
             if (el) {
-                el.innerHTML = `<strong>내 현재 기록:</strong> 최고 <strong>Lv.${s.maxLevel}</strong> | 강화 ${s.enhanceCount}회 (대성공 ${s.greatCount} / 성공 ${s.successCount} / 유지 ${s.maintainCount} / 실패 ${s.failCount} / 파괴 ${s.destroyCount}) | 푼 문제 ${s.problemsSolved}개 | 공짜 돈벌기 ${s.freeGoldClicks}회 | 사용 아이템 ${s.itemsUsed}개`;
+                el.innerHTML = `<strong>내 현재 기록 (${s.version}):</strong> 최고 <strong>Lv.${s.maxLevel}</strong> | 강화 ${s.enhanceCount}회 (대성공 ${s.greatCount} / 성공 ${s.successCount} / 유지 ${s.maintainCount} / 실패 ${s.failCount} / 파괴 ${s.destroyCount}) | 푼 문제 ${s.problemsSolved}개 | 공짜 돈벌기 ${s.freeGoldClicks}회 | 사용 아이템 ${s.itemsUsed}개`;
             }
         }
 
@@ -3214,10 +3260,10 @@
         async function refreshRankings() {
             const tbody = document.getElementById('ranking-table-body');
             if (typeof window.loadFirebaseRankings !== 'function') {
-                tbody.innerHTML = '<tr><td colspan="12" style="padding:20px; color:#c0392b;">Firebase 연결을 초기화하는 중입니다. 잠시 후 다시 시도하세요.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="13" style="padding:20px; color:#c0392b;">Firebase 연결을 초기화하는 중입니다. 잠시 후 다시 시도하세요.</td></tr>';
                 return;
             }
-            tbody.innerHTML = '<tr><td colspan="12" style="padding:20px; color:#7f8c8d;">⏳ 랭킹 불러오는 중...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="13" style="padding:20px; color:#7f8c8d;">⏳ 랭킹 불러오는 중...</td></tr>';
             await window.loadFirebaseRankings();
         }
 
@@ -3254,6 +3300,8 @@
 
         // Initialize
         window.onload = function() {
+            const vBadge = document.getElementById('version-badge');
+            if (vBadge) vBadge.innerText = GAME_VERSION;
             initQuizSelector();
             updateGoldUI();
             updateItemUI();
@@ -3284,9 +3332,91 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        let cachedRankingsList = [];
+        let selectedRankVersion = 'ALL';
+
+        window.selectRankVersion = (ver) => {
+            selectedRankVersion = ver;
+            renderVersionFilterBar();
+            renderRankingRows();
+        };
+
+        function renderVersionFilterBar() {
+            const bar = document.getElementById('rank-version-filter-bar');
+            if (!bar) return;
+
+            const verSet = new Set();
+            if (typeof GAME_VERSION !== 'undefined') verSet.add(GAME_VERSION);
+            cachedRankingsList.forEach(r => {
+                verSet.add(r.version ? String(r.version) : '이전 버전');
+            });
+
+            const versions = Array.from(verSet).sort((a, b) => {
+                if (a === '이전 버전') return 1;
+                if (b === '이전 버전') return -1;
+                const na = parseInt(a.replace(/\D/g, ''), 10) || 0;
+                const nb = parseInt(b.replace(/\D/g, ''), 10) || 0;
+                return nb - na;
+            });
+
+            if (selectedRankVersion !== 'ALL' && !verSet.has(selectedRankVersion)) {
+                selectedRankVersion = 'ALL';
+            }
+
+            const buttons = [`<button class="rank-filter-btn ${selectedRankVersion === 'ALL' ? 'active' : ''}" onclick="selectRankVersion('ALL')">전체 버전 (${cachedRankingsList.length})</button>`];
+            versions.forEach(v => {
+                const count = cachedRankingsList.filter(r => (r.version ? String(r.version) : '이전 버전') === v).length;
+                const label = (typeof GAME_VERSION !== 'undefined' && v === GAME_VERSION) ? `${v} (현재, ${count})` : `${v} (${count})`;
+                buttons.push(`<button class="rank-filter-btn ${selectedRankVersion === v ? 'active' : ''}" onclick="selectRankVersion('${v}')">${label}</button>`);
+            });
+            bar.innerHTML = buttons.join('');
+        }
+
+        function renderRankingRows() {
+            const tbody = document.getElementById('ranking-table-body');
+            if (!tbody) return;
+
+            const filtered = selectedRankVersion === 'ALL'
+                ? cachedRankingsList
+                : cachedRankingsList.filter(r => (r.version ? String(r.version) : '이전 버전') === selectedRankVersion);
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="13" style="padding:20px; color:#7f8c8d;">해당 버전에 등록된 랭킹이 없습니다. 첫 번째로 등록해 보세요!</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map((r, idx) => {
+                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}`;
+                const isTeacher = (r.grade === 1206 && r.classNum === 1206 && r.number === 1206) || r.label === '과학쌤';
+                const displayId = isTeacher
+                    ? '과학쌤'
+                    : (r.grade && r.classNum && r.number
+                        ? `${r.grade}${r.classNum}${String(r.number).padStart(2, '0')}`
+                        : (r.label || '-'));
+                const idStyle = isTeacher ? 'font-weight:bold; color:#8e44ad;' : 'font-weight:bold; color:#2c3e50;';
+                const verLabel = r.version ? String(r.version) : '이전 버전';
+                return `<tr>
+                    <td style="font-weight:bold;">${medal}</td>
+                    <td style="${idStyle}">${displayId}</td>
+                    <td style="font-size:0.85rem; color:#7f8c8d; font-weight:bold;">${verLabel}</td>
+                    <td style="font-weight:bold; color:#e74c3c;">Lv.${r.maxLevel ?? 0}</td>
+                    <td>${r.enhanceCount ?? 0}</td>
+                    <td style="color:#27ae60;">${r.greatCount ?? 0}</td>
+                    <td style="color:#2980b9;">${r.successCount ?? 0}</td>
+                    <td>${r.maintainCount ?? 0}</td>
+                    <td style="color:#e67e22;">${r.failCount ?? 0}</td>
+                    <td style="color:#c0392b;">${r.destroyCount ?? 0}</td>
+                    <td style="font-weight:bold;">${r.problemsSolved ?? 0}</td>
+                    <td>${r.freeGoldClicks ?? 0}</td>
+                    <td style="color:#8e44ad; font-weight:bold;">${r.itemsUsed ?? 0}</td>
+                </tr>`;
+            }).join('');
+        }
+
         window.submitFirebaseRanking = async (grade, classNum, number, stats) => {
             const isTeacher = (grade === 1206 && classNum === 1206 && number === 1206);
-            const docId = isTeacher ? 'teacher-1206' : `${grade}-${classNum}-${number}`;
+            const ver = stats.version || (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33');
+            const docId = isTeacher ? `teacher-1206-${ver}` : `${grade}-${classNum}-${number}-${ver}`;
             const displayLabel = isTeacher ? '과학쌤' : `${grade}${classNum}${String(number).padStart(2, '0')}`;
             const docRef = doc(db, 'rankings', docId);
             await setDoc(docRef, {
@@ -3294,6 +3424,7 @@
                 classNum,
                 number,
                 label: displayLabel,
+                version: ver,
                 maxLevel: stats.maxLevel,
                 enhanceCount: stats.enhanceCount,
                 greatCount: stats.greatCount,
@@ -3322,38 +3453,12 @@
                     return (a.enhanceCount ?? 0) - (b.enhanceCount ?? 0);
                 });
 
-                if (list.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="12" style="padding:20px; color:#7f8c8d;">아직 등록된 랭킹이 없습니다. 첫 번째로 등록해 보세요!</td></tr>';
-                    return;
-                }
-
-                tbody.innerHTML = list.map((r, idx) => {
-                    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}`;
-                    const isTeacher = (r.grade === 1206 && r.classNum === 1206 && r.number === 1206) || r.label === '과학쌤';
-                    const displayId = isTeacher
-                        ? '과학쌤'
-                        : (r.grade && r.classNum && r.number
-                            ? `${r.grade}${r.classNum}${String(r.number).padStart(2, '0')}`
-                            : (r.label || '-'));
-                    const idStyle = isTeacher ? 'font-weight:bold; color:#8e44ad;' : 'font-weight:bold; color:#2c3e50;';
-                    return `<tr>
-                        <td style="font-weight:bold;">${medal}</td>
-                        <td style="${idStyle}">${displayId}</td>
-                        <td style="font-weight:bold; color:#e74c3c;">Lv.${r.maxLevel ?? 0}</td>
-                        <td>${r.enhanceCount ?? 0}</td>
-                        <td style="color:#27ae60;">${r.greatCount ?? 0}</td>
-                        <td style="color:#2980b9;">${r.successCount ?? 0}</td>
-                        <td>${r.maintainCount ?? 0}</td>
-                        <td style="color:#e67e22;">${r.failCount ?? 0}</td>
-                        <td style="color:#c0392b;">${r.destroyCount ?? 0}</td>
-                        <td style="font-weight:bold;">${r.problemsSolved ?? 0}</td>
-                        <td>${r.freeGoldClicks ?? 0}</td>
-                        <td style="color:#8e44ad; font-weight:bold;">${r.itemsUsed ?? 0}</td>
-                    </tr>`;
-                }).join('');
+                cachedRankingsList = list;
+                renderVersionFilterBar();
+                renderRankingRows();
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = `<tr><td colspan="12" style="padding:20px; color:#c0392b;">랭킹 불러오기 실패 (Firestore 보안 규칙을 확인해 주세요)</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="13" style="padding:20px; color:#c0392b;">랭킹 불러오기 실패 (Firestore 보안 규칙을 확인해 주세요)</td></tr>`;
             }
         };
     </script>
