@@ -589,49 +589,6 @@
             font-family: 'Noto Sans KR', 'Malgun Gothic', 'Dotum', sans-serif; font-size:1.5rem; padding:10px 30px; background:var(--border-color); color:#fff; border:none; border-radius:5px; cursor:pointer; box-shadow: 3px 3px 0 #000; width: 100%;
         }
 
-        /* Sacrifice Confirm Modal */
-        #sacrifice-confirm-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 2100;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        #sacrifice-confirm-content {
-            background: var(--bg-color);
-            border: 4px solid var(--border-color);
-            padding: 28px 24px;
-            border-radius: 10px;
-            text-align: center;
-            width: 100%;
-            max-width: 420px;
-            box-sizing: border-box;
-            box-shadow: 8px 8px 0 var(--border-color);
-            background-image: repeating-linear-gradient(transparent, transparent 31px, var(--line-color) 31px, var(--line-color) 32px);
-        }
-        #sacrifice-confirm-message {
-            font-size: 1.25rem;
-            font-weight: bold;
-            margin-bottom: 22px;
-            color: var(--text-color);
-            line-height: 1.6;
-            word-break: keep-all;
-        }
-        .sacrifice-confirm-actions {
-            display: flex;
-            gap: 10px;
-        }
-        .sacrifice-confirm-actions button {
-            flex: 1;
-            font-size: 1.25rem;
-            font-weight: bold;
-            padding: 10px 16px;
-        }
-
         /* QR Modal */
         #qr-modal {
             display: none;
@@ -900,105 +857,6 @@
             box-shadow: 0 0 0 var(--border-color);
         }
 
-        /* 인벤토리 + 희생 패널 가로 배치 */
-        #inv-sacrifice-row {
-            display: flex;
-            gap: 12px;
-            width: 100%;
-            align-items: stretch;
-            box-sizing: border-box;
-        }
-        #inv-sacrifice-row #inventory-panel {
-            flex: 1.45;
-            padding: 12px;
-            gap: 10px;
-        }
-        #inv-sacrifice-row .inv-slot {
-            width: 60px;
-            height: 60px;
-        }
-        #inv-sacrifice-row #btn-offer-sword {
-            font-size: 1.05rem;
-            padding: 9px 10px;
-            line-height: 1.3;
-            word-break: keep-all;
-        }
-        #sacrifice-panel {
-            flex: 1;
-            background: var(--panel-bg);
-            border: 3px solid var(--border-color);
-            border-radius: 5px;
-            padding: 12px;
-            box-shadow: 4px 4px 0 rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            gap: 10px;
-            box-sizing: border-box;
-        }
-
-        /* 우측 상단 도움말 버튼 & 모달 */
-        #help-btn {
-            position: fixed;
-            top: 15px;
-            right: 242px;
-            z-index: 5500;
-            font-size: 1rem;
-            font-weight: bold;
-            padding: 8px 14px;
-            background: rgba(255, 255, 255, 0.92);
-            color: var(--text-color);
-            border: 2px solid var(--border-color);
-            border-radius: 6px;
-            box-shadow: 2px 2px 0 var(--border-color);
-            cursor: pointer;
-        }
-        #help-btn:hover {
-            background: #f1c40f;
-        }
-        #help-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.75);
-            z-index: 6000;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        #help-modal-content {
-            width: 100%;
-            max-width: 580px;
-            max-height: 82vh;
-            overflow-y: auto;
-            background: var(--bg-color);
-            border: 4px solid var(--border-color);
-            border-radius: 10px;
-            box-shadow: 8px 8px 0 var(--border-color);
-            padding: 22px 24px;
-            text-align: left;
-            font-size: 1.02rem;
-            line-height: 1.6;
-            box-sizing: border-box;
-            background-image: repeating-linear-gradient(transparent, transparent 31px, var(--line-color) 31px, var(--line-color) 32px);
-        }
-        #help-modal-content h2 {
-            margin: 0 0 14px 0;
-            text-align: center;
-            color: var(--info);
-            border-bottom: 2px solid var(--line-color);
-            padding-bottom: 8px;
-        }
-        #help-modal-content ul {
-            margin: 0;
-            padding-left: 20px;
-        }
-        #help-modal-content li {
-            margin-bottom: 8px;
-            word-break: keep-all;
-        }
-
         @media (max-width: 500px) {
             h1 { font-size: 3rem; }
             #main-area { padding: 10px; gap: 20px; }
@@ -1012,13 +870,10 @@
             #title-box h1 { font-size: 2.5rem; }
             #tutorial-box { font-size: 0.95rem; padding: 14px; }
             #start-game-btn { font-size: 1.6rem; padding: 12px 30px; }
-            #inv-sacrifice-row { flex-direction: column; }
-            #help-btn { right: 15px; top: 58px; }
         }
     </style>
 </head>
 <body>
-    <button id="help-btn" onclick="openHelpModal()" title="게임 방법 안내">❓ 도움말</button>
     <button id="sound-btn" onclick="toggleSound()" title="효과음 켜기/끄기">🔊 효과음</button>
     <button id="fullscreen-btn" onclick="toggleFullscreen()" title="전체화면 전환">⛶ 전체화면</button>
     <div id="version-badge">v33</div>
@@ -1054,14 +909,6 @@
                 </ul>
             </div>
             <button id="start-game-btn" onclick="startGame()" disabled>게임 시작</button>
-        </div>
-    </div>
-
-    <!-- Help Modal -->
-    <div id="help-modal" onclick="if(event.target === this) closeHelpModal()">
-        <div id="help-modal-content">
-            <div id="help-modal-body"></div>
-            <button onclick="closeHelpModal()" style="width:100%; margin-top:16px; font-size:1.2rem; padding:10px; background:#34495e; color:#fff;">닫기</button>
         </div>
     </div>
 
@@ -1167,18 +1014,6 @@
         </div>
     </div>
 
-    <!-- Sacrifice Confirm Modal -->
-    <div id="sacrifice-confirm-modal" onclick="if(event.target === this) closeSacrificeConfirm()">
-        <div id="sacrifice-confirm-content">
-            <div style="font-size: 2.2rem; margin-bottom: 8px;">🗡️🔥</div>
-            <div id="sacrifice-confirm-message">정말 현재 검을 희생하시겠습니까?</div>
-            <div class="sacrifice-confirm-actions">
-                <button onclick="confirmSacrificeSword()" style="background:#9b59b6; color:#fff; border-color:#6c3483; box-shadow:3px 3px 0 #6c3483;">희생하기</button>
-                <button onclick="closeSacrificeConfirm()" style="background:#ecf0f1; color:#2c3e50;">취소</button>
-            </div>
-        </div>
-    </div>
-
     <div id="save-indicator">☁️ 자동 저장됨</div>
 
     <header>
@@ -1207,24 +1042,14 @@
                 <button onclick="openRankingModal()" style="background:#ffeaa7;">🏆 랭킹 등록/보기</button>
             </div>
             
-            <!-- Inventory & Sacrifice -->
-            <div id="inv-sacrifice-row">
-                <div id="inventory-panel" style="flex-direction: column; align-items: center;">
-                    <div style="display:flex; gap:10px; justify-content:center; width:100%;">
-                        <div class="inv-slot" onclick="handleInventoryClick(0)" id="inv-0"></div>
-                        <div class="inv-slot" onclick="handleInventoryClick(1)" id="inv-1"></div>
-                        <div class="inv-slot" onclick="handleInventoryClick(2)" id="inv-2"></div>
-                    </div>
-                    <button id="btn-offer-sword" onclick="toggleOfferMode()">🔥 검 재물로 바치기</button>
+            <!-- Inventory -->
+            <div id="inventory-panel" style="flex-direction: column; align-items: center;">
+                <div style="display:flex; gap:15px; justify-content:center; width:100%;">
+                    <div class="inv-slot" onclick="handleInventoryClick(0)" id="inv-0"></div>
+                    <div class="inv-slot" onclick="handleInventoryClick(1)" id="inv-1"></div>
+                    <div class="inv-slot" onclick="handleInventoryClick(2)" id="inv-2"></div>
                 </div>
-
-                <div id="sacrifice-panel">
-                    <div style="flex:1; font-size:1rem; text-align: center; color:#2c3e50; background:#f9ebea; border-radius:5px; padding: 8px 6px; display:flex; flex-direction:column; justify-content:center;">
-                        <div>🔥 배율: <span id="click-multiplier-display" style="color:#e74c3c; font-weight:bold;">x1.0</span></div>
-                        <span style="font-size:0.85rem; color:#7f8c8d;">(최고 희생: Lv.<span id="sacrificed-level-display">0</span>)</span>
-                    </div>
-                    <button onclick="sacrificeSword()" style="width:100%; font-size:0.98rem; padding:9px 6px; background:#9b59b6; color:#fff; border:2px solid #8e44ad; border-radius:5px; font-weight:bold; cursor:pointer; box-sizing:border-box; line-height:1.3; word-break:keep-all;">🗡️ 현재 검 희생하기<br>(Lv.11 이상)</button>
-                </div>
+                <button id="btn-offer-sword" onclick="toggleOfferMode()">🔥 검 재물로 바치기 (인벤토리 검 선택)</button>
             </div>
 
             <!-- 강화 일지 -->
@@ -1334,21 +1159,21 @@
                 <div id="content-sword-shop" style="display:none; flex-direction:column; gap:10px; margin-bottom: 15px;">
                     <div class="shop-item-card">
                         <div class="shop-item-header">
-                            <span id="sword-shop-name-10">🗡️ 10레벨 검 (???)</span>
+                            <span>🗡️ 10레벨 검 (화염검)</span>
                             <span class="shop-item-price">1,500G</span>
                         </div>
                         <button id="btn-buy-sword-10" class="shop-btn" onclick="buySword(10, 1500)" disabled>🔒 Lv.10 도달 시 해금</button>
                     </div>
                     <div class="shop-item-card">
                         <div class="shop-item-header">
-                            <span id="sword-shop-name-20">🗡️ 20레벨 검 (???)</span>
+                            <span>🗡️ 20레벨 검 (포세이돈 삼지창)</span>
                             <span class="shop-item-price">10,000G</span>
                         </div>
                         <button id="btn-buy-sword-20" class="shop-btn" onclick="buySword(20, 10000)" disabled>🔒 Lv.20 도달 시 해금</button>
                     </div>
                     <div class="shop-item-card">
                         <div class="shop-item-header">
-                            <span id="sword-shop-name-30">🗡️ 30레벨 검 (???)</span>
+                            <span>🗡️ 30레벨 검 (천사 날개검)</span>
                             <span class="shop-item-price">50,000G</span>
                         </div>
                         <button id="btn-buy-sword-30" class="shop-btn" onclick="buySword(30, 50000)" disabled>🔒 Lv.30 도달 시 해금</button>
@@ -1356,7 +1181,14 @@
                 </div>
 
                 <div id="content-earn" style="display:flex; flex-direction:column; gap:10px; margin-bottom: 15px; border:2px dashed var(--border-color); padding:15px; background:#fff; border-radius:5px; box-sizing:border-box;">
-                    <button onclick="openQuiz()" style="font-size:1.5rem; width:100%; padding:10px; background:#3498db; color:#fff; border:2px solid #2980b9; border-radius:5px; font-weight:bold; cursor:pointer; box-sizing:border-box;">📝 퀴즈로 돈벌기</button>
+                    <div style="display:flex; gap:8px; align-items:stretch;">
+                        <div style="flex:1; font-size:1.1rem; text-align: center; color:#2c3e50; background:#f9ebea; border-radius:5px; padding: 10px 6px; display:flex; flex-direction:column; justify-content:center;">
+                            <div>🔥 배율: <span id="click-multiplier-display" style="color:#e74c3c; font-weight:bold;">x1.0</span></div>
+                            <span style="font-size:0.9rem; color:#7f8c8d;">(최고 희생 레벨: <span id="sacrificed-level-display">0</span>)</span>
+                        </div>
+                        <button onclick="sacrificeSword()" style="flex:1; font-size:1.05rem; padding:10px 6px; background:#9b59b6; color:#fff; border:2px solid #8e44ad; border-radius:5px; font-weight:bold; cursor:pointer; box-sizing:border-box; line-height:1.3; word-break:keep-all;">🗡️ 현재 검 희생하기<br>(Lv.11 이상)</button>
+                    </div>
+                    <button onclick="openQuiz()" style="font-size:1.5rem; width:100%; padding:10px; background:#3498db; color:#fff; border:2px solid #2980b9; border-radius:5px; font-weight:bold; cursor:pointer; box-sizing:border-box;">📝 퀴즈 풀기 시작!</button>
                     <button id="btn-free-gold" onclick="earnFreeGold()" style="font-size:1.5rem; width:100%; padding:10px; background:#2ecc71; color:#fff; border:2px solid #27ae60; border-radius:5px; font-weight:bold; cursor:pointer; box-sizing:border-box;">👆 공짜로 돈벌기</button>
                 </div>
             </div>
@@ -2372,12 +2204,6 @@
                 { lvl: 20, price: 10000 },
                 { lvl: 30, price: 50000 }
             ].forEach(item => {
-                const nameEl = document.getElementById(`sword-shop-name-${item.lvl}`);
-                if (nameEl) {
-                    nameEl.innerText = maxReached >= item.lvl
-                        ? `🗡️ ${item.lvl}레벨 검 (${getSwordName(item.lvl)})`
-                        : `🗡️ ${item.lvl}레벨 검 (???)`;
-                }
                 const btn = document.getElementById(`btn-buy-sword-${item.lvl}`);
                 if (!btn) return;
                 if (maxReached >= item.lvl) {
@@ -2460,24 +2286,7 @@
                 addLog(`현재 검(Lv.${currentLevel})이 기존 희생 레벨(Lv.${sacrificedLevel})보다 낮거나 같습니다!`, "c-f");
                 return;
             }
-
-            const curMult = Math.max(1, sacrificedLevel / 10);
-            const nextMult = Math.max(1, currentLevel / 10);
-            document.getElementById('sacrifice-confirm-message').innerHTML =
-                `정말 <span style="color:#8e44ad;">Lv.${currentLevel} ${getSwordName(currentLevel)}</span>을(를)<br>희생하시겠습니까?<br><br>` +
-                `<span style="font-size:1.05rem; color:#e74c3c;">• 현재 검은 0단계로 초기화됩니다.</span><br>` +
-                `<span style="font-size:1.05rem; color:#27ae60;">• 돈벌기 배율: x${curMult.toFixed(1)} → x${nextMult.toFixed(1)}</span>`;
-            document.getElementById('sacrifice-confirm-modal').style.display = 'flex';
-        }
-
-        function closeSacrificeConfirm() {
-            document.getElementById('sacrifice-confirm-modal').style.display = 'none';
-        }
-
-        function confirmSacrificeSword() {
-            closeSacrificeConfirm();
-            if (isAnimating || currentLevel <= 10 || currentLevel <= sacrificedLevel) return;
-
+            
             sacrificedLevel = currentLevel;
             currentLevel = 0;
             syncItemAvailability();
@@ -3381,20 +3190,6 @@
             }
             const titleScreen = document.getElementById('title-screen');
             if (titleScreen) titleScreen.style.display = 'none';
-        }
-
-        /** --- 도움말 모달 로직 --- */
-        function openHelpModal() {
-            const tutorialBox = document.getElementById('tutorial-box');
-            const helpBody = document.getElementById('help-modal-body');
-            if (tutorialBox && helpBody) {
-                helpBody.innerHTML = tutorialBox.innerHTML;
-            }
-            document.getElementById('help-modal').style.display = 'flex';
-        }
-
-        function closeHelpModal() {
-            document.getElementById('help-modal').style.display = 'none';
         }
 
         /** --- 전체화면 전환 로직 --- */
