@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 검강화게임 v33 -->
+<!-- 검강화게임 v33.05 -->
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -124,6 +124,15 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: 3px 3px 0 var(--border-color);
+        }
+        button.req-locked-btn {
+            background: #95a5a6 !important;
+            border-color: #7f8c8d !important;
+            color: #fff !important;
+            box-shadow: 2px 2px 0 #7f8c8d !important;
+            opacity: 0.75 !important;
+            cursor: not-allowed !important;
+            animation: none !important;
         }
 
         #enhance-btn {
@@ -1021,7 +1030,7 @@
     <button id="help-btn" onclick="openHelpModal()" title="게임 방법 안내">❓ 도움말</button>
     <button id="sound-btn" onclick="toggleSound()" title="효과음 켜기/끄기">🔊 효과음</button>
     <button id="fullscreen-btn" onclick="toggleFullscreen()" title="전체화면 전환">⛶ 전체화면</button>
-    <div id="version-badge">v33</div>
+    <div id="version-badge">v33.05</div>
 
     <!-- Title Screen -->
     <div id="title-screen">
@@ -1053,7 +1062,6 @@
                     <li><strong>피버 타임:</strong> 강화 시 '유지'가 5연속 나오면 3초간 골드 소모 없이 0.5초마다 광클 강화가 가능합니다!</li>
                 </ul>
             </div>
-            <div id="student-load-status" style="display:none; font-size:1rem; font-weight:bold; margin-bottom:12px; color:var(--info);"></div>
             <button id="start-game-btn" onclick="startGame()" disabled>게임 시작</button>
         </div>
     </div>
@@ -1102,6 +1110,7 @@
                 <div id="rank-my-stats" class="rank-my-stats"></div>
             </div>
             <div id="rank-version-filter-bar" class="rank-filter-bar"></div>
+            <div id="rank-grade-class-filter-bar" class="rank-filter-bar" style="margin-bottom:14px;"></div>
             <div class="rank-table-wrap">
                 <table class="rank-table">
                     <thead>
@@ -1119,10 +1128,12 @@
                             <th>푼 문제</th>
                             <th>공짜 클릭</th>
                             <th>아이템</th>
+                            <th>총 골드</th>
+                            <th>배율</th>
                         </tr>
                     </thead>
                     <tbody id="ranking-table-body">
-                        <tr><td colspan="13" style="padding:20px; color:#7f8c8d;">랭킹 데이터를 불러오는 중...</td></tr>
+                        <tr><td colspan="15" style="padding:20px; color:#7f8c8d;">랭킹 데이터를 불러오는 중...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1133,7 +1144,7 @@
     <!-- Quiz Modal -->
     <div id="quiz-modal">
         <div id="quiz-content">
-            <h2 id="quiz-title" style="font-size: 1.9rem; margin-top:0; background:#fff; border: 2px solid #333; display:inline-block; padding:5px 20px;">과학 문제 풀기</h2>
+            <h2 id="quiz-title" style="font-size: 1.9rem; margin-top:0; background:#fff; border: 2px solid #333; display:inline-block; padding:5px 20px;">문제로 돈벌기</h2>
             <p id="quiz-info-msg" style="font-size: 0.9rem; color: #e74c3c; margin-top: 10px; margin-bottom: 10px; text-align: center; word-break:keep-all; font-weight: bold;">※ 최고 강화 레벨에 따라 문제 난이도가 높아집니다. 문제를 연속으로 5개 맞추면 무작위 보상(확률 버프 또는 골드)이 부여됩니다!</p>
             <div id="quiz-play" style="display:none;">
                 <div id="quiz-streak" style="font-size: 1.0rem; color: #e74c3c; margin-bottom: 10px; font-weight: bold;">🔥 연속 정답: 0</div>
@@ -1224,7 +1235,7 @@
                         <div>🔥 배율: <span id="click-multiplier-display" style="color:#e74c3c; font-weight:bold;">x1.0</span></div>
                         <span style="font-size:0.85rem; color:#7f8c8d;">(최고 희생: Lv.<span id="sacrificed-level-display">0</span>)</span>
                     </div>
-                    <button onclick="sacrificeSword()" style="width:100%; font-size:0.98rem; padding:9px 6px; background:#9b59b6; color:#fff; border:2px solid #8e44ad; border-radius:5px; font-weight:bold; cursor:pointer; box-sizing:border-box; line-height:1.3; word-break:keep-all;">🗡️ 현재 검 희생하기<br>(Lv.11 이상)</button>
+                    <button id="btn-sacrifice-sword" onclick="sacrificeSword()" style="width:100%; font-size:0.98rem; padding:9px 6px; background:#9b59b6; color:#fff; border:2px solid #8e44ad; border-radius:5px; font-weight:bold; cursor:pointer; box-sizing:border-box; line-height:1.3; word-break:keep-all;">🗡️ 현재 검 희생하기<br>(Lv.<span id="sacrifice-min-level-display">11</span> 이상)</button>
                 </div>
             </div>
 
@@ -1366,18 +1377,21 @@
 
     <script>
         /** --- 게임 버전 정보 --- */
-        const GAME_VERSION = 'v33';
+        const GAME_VERSION = 'v33.05';
 
         /** --- 자동 탐색된 퀴즈 파일 목록 --- */
         let QUIZ_FILES = [];
         let selectedQuizFiles = [];
         const localQuizCache = {}; // 로컬 파일 직접 선택 시 캐시
 
-        /** --- 같은 폴더 내 JS 파일 자동 탐색 (GitHub Pages API -> 디렉터리 인덱스 순) --- */
+        /** --- 퀴즈 폴더 상대 경로 (검강화게임 폴더 -> 형제 quiz 폴더) --- */
+        const QUIZ_DIR = '../quiz/';
+
+        /** --- quiz 폴더 내 JS 파일 자동 탐색 (GitHub Pages API -> 디렉터리 인덱스 순) --- */
         async function discoverQuizFiles() {
             const excluded = new Set(['qrcode.min.js']);
 
-            // 1) GitHub Pages 환경: GitHub REST API로 같은 폴더 내 .js 파일 조회
+            // 1) GitHub Pages 환경: GitHub REST API로 상위 폴더의 quiz/ 내 .js 파일 조회
             if (window.location.hostname.endsWith('.github.io')) {
                 const owner = window.location.hostname.split('.')[0];
                 const rawParts = window.location.pathname
@@ -1392,9 +1406,13 @@
 
                 const candidates = [];
                 if (rawParts.length > 0) {
-                    candidates.push({ repo: rawParts[0], dir: rawParts.slice(1).join('/') });
+                    const repo = rawParts[0];
+                    const subParts = rawParts.slice(1);
+                    const parentParts = subParts.length > 0 ? subParts.slice(0, -1) : [];
+                    candidates.push({ repo, dir: [...parentParts, 'quiz'].join('/') });
                 }
-                candidates.push({ repo: window.location.hostname, dir: rawParts.join('/') });
+                const userParentParts = rawParts.length > 0 ? rawParts.slice(0, -1) : [];
+                candidates.push({ repo: window.location.hostname, dir: [...userParentParts, 'quiz'].join('/') });
 
                 for (const c of candidates) {
                     const encodedDir = c.dir ? '/' + c.dir.split('/').map(encodeURIComponent).join('/') : '';
@@ -1418,10 +1436,10 @@
                 }
             }
 
-            // 2) 일반 웹 서버 / 로컬 서버 환경: 현재 폴더 목록(./) HTML 파싱
+            // 2) 일반 웹 서버 / 로컬 서버 환경: ../quiz/ 폴더 목록 HTML 파싱
             if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
                 try {
-                    const res = await fetch('./', { cache: 'no-store' });
+                    const res = await fetch(QUIZ_DIR, { cache: 'no-store' });
                     if (res.ok) {
                         const text = await res.text();
                         const doc = new DOMParser().parseFromString(text, 'text/html');
@@ -1448,7 +1466,7 @@
             return null;
         }
 
-        function renderQuizCheckboxes(options, checkedFiles) {
+                function renderQuizCheckboxes(options, checkedFiles) {
             const listEl = document.getElementById('quiz-checkbox-list');
             listEl.innerHTML = '';
             if (options.length === 0) {
@@ -1505,54 +1523,23 @@
         }
 
         /** --- 동적 퀴즈 다중 로드 및 QR 공유 로직 --- */
-        let isStudentMode = false;
-
-        function setQuizStatus(msg, color, showRetry = false) {
-            const statusEl = document.getElementById('quiz-load-status');
-            if (statusEl) {
-                statusEl.style.color = color;
-                statusEl.innerText = msg;
-            }
-            const studentStatusEl = document.getElementById('student-load-status');
-            if (studentStatusEl && isStudentMode) {
-                studentStatusEl.style.display = 'block';
-                studentStatusEl.style.color = color;
-                studentStatusEl.innerHTML = showRetry
-                    ? `${msg} <button onclick="loadQuizScripts(selectedQuizFiles)" style="font-size:0.9rem; padding:4px 10px; margin-left:6px; background:#3498db; color:#fff; border:2px solid #2980b9; box-shadow:none;">🔄 다시 시도</button>`
-                    : msg;
-            }
-        }
-
         async function initQuizSelector() {
-            setQuizStatus('🔍 같은 폴더 내 퀴즈 파일(.js)을 탐색 중...', '#f39c12');
+            const statusEl = document.getElementById('quiz-load-status');
+            statusEl.style.color = '#f39c12';
+            statusEl.innerText = '🔍 quiz 폴더 내 퀴즈 파일(.js)을 탐색 중...';
 
             // URL 파라미터(?quiz=파일1.js,파일2.js) 확인
             const params = new URLSearchParams(window.location.search);
             const urlQuiz = params.get('quiz');
 
-            if (urlQuiz && urlQuiz.trim() !== '') {
+            if (urlQuiz) {
                 // QR 링크(?quiz=...)로 접속한 학생용 화면에서는 단원 선택 영역 전체 숨김
-                isStudentMode = true;
                 const selectBox = document.getElementById('quiz-select-box');
                 if (selectBox) selectBox.style.display = 'none';
-
-                let decodedParam = urlQuiz;
-                try {
-                    // 일부 앱/QR 리더에서 이중 인코딩된 경우 보정
-                    if (/%[0-9A-Fa-f]{2}/.test(decodedParam)) {
-                        decodedParam = decodeURIComponent(decodedParam);
-                    }
-                } catch (e) { /* 원본 유지 */ }
-
-                const initialFiles = decodedParam
-                    .split(',')
-                    .map(f => f.trim())
-                    .filter(Boolean)
-                    .map(f => /\.js$/i.test(f) ? f : `${f}.js`);
-
+                const initialFiles = urlQuiz.split(',').map(f => f.trim()).filter(Boolean);
                 QUIZ_FILES = initialFiles.map(file => ({ name: file.replace(/\.js$/i, ''), file }));
                 selectedQuizFiles = initialFiles;
-                await loadQuizScripts(selectedQuizFiles);
+                loadQuizScripts(selectedQuizFiles);
                 return;
             }
 
@@ -1563,7 +1550,7 @@
                 const initialFiles = [QUIZ_FILES[0].file];
                 renderQuizCheckboxes(QUIZ_FILES, initialFiles);
                 selectedQuizFiles = initialFiles;
-                await loadQuizScripts(selectedQuizFiles);
+                loadQuizScripts(selectedQuizFiles);
             } else {
                 // 자동 탐색 불가(로컬 file:// 또는 비공개 저장소 등) -> 파일 선택 버튼 표시
                 const localBtn = document.getElementById('btn-local-files');
@@ -1571,12 +1558,10 @@
                 QUIZ_FILES = [];
                 selectedQuizFiles = [];
                 renderQuizCheckboxes(QUIZ_FILES, selectedQuizFiles);
-                setQuizStatus(
-                    window.location.protocol === 'file:'
-                        ? 'ℹ️ 로컬 파일 실행 시 브라우저 보안상 자동 탐색이 제한됩니다. [📂 파일 선택]을 눌러 .js 파일을 불러오세요.'
-                        : '⚠️ 폴더 내 .js 파일을 자동으로 찾지 못했습니다. (GitHub 공개 저장소 여부 확인 또는 [📂 파일 선택] 이용)',
-                    '#e67e22'
-                );
+                statusEl.style.color = '#e67e22';
+                statusEl.innerText = window.location.protocol === 'file:'
+                    ? 'ℹ️ 로컬 파일 실행 시 브라우저 보안상 자동 탐색이 제한됩니다. [📂 파일 선택]을 눌러 .js 파일을 불러오세요.'
+                    : '⚠️ 폴더 내 .js 파일을 자동으로 찾지 못했습니다. (GitHub 공개 저장소 여부 확인 또는 [📂 파일 선택] 이용)';
                 document.getElementById('start-game-btn').disabled = true;
             }
         }
@@ -1588,47 +1573,10 @@
             loadQuizScripts(selectedQuizFiles);
         }
 
-        function encodePathSegments(filename) {
-            return filename.split('/').map(seg => encodeURIComponent(seg)).join('/');
-        }
-
-        function parseQuizCode(code) {
-            // const/let/var quizData 및 window.quizData 선언 방식을 모두 안전하게 파싱
-            const fn = new Function(
-                code + '; return (typeof quizData !== "undefined" && quizData) ? quizData : (typeof window !== "undefined" && window.quizData ? window.quizData : null);'
-            );
-            return fn();
-        }
-
-        async function loadSingleScript(filename) {
+        function loadSingleScript(filename) {
             if (localQuizCache[filename]) {
-                return localQuizCache[filename];
+                return Promise.resolve(localQuizCache[filename]);
             }
-
-            // 한글 정규화(NFC/NFD) 후보 생성
-            const candidates = Array.from(new Set([
-                filename,
-                filename.normalize ? filename.normalize('NFC') : filename,
-                filename.normalize ? filename.normalize('NFD') : filename
-            ]));
-
-            // 1) http/https 환경: fetch로 텍스트 로드 후 격리 실행 (다중 파일 const 충돌 방지)
-            if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
-                for (const name of candidates) {
-                    try {
-                        const url = encodePathSegments(name) + '?v=' + Date.now();
-                        const res = await fetch(url, { cache: 'no-store' });
-                        if (!res.ok) continue;
-                        const code = await res.text();
-                        const data = parseQuizCode(code);
-                        if (data && typeof data === 'object') {
-                            return data;
-                        }
-                    } catch (e) { /* 다음 후보 또는 script 태그 폴백 */ }
-                }
-            }
-
-            // 2) 폴백: <script> 태그 동적 로드 (file:// 등)
             return new Promise((resolve, reject) => {
                 const oldScript = document.getElementById('dynamic-quiz-script');
                 if (oldScript) oldScript.remove();
@@ -1636,18 +1584,11 @@
 
                 const script = document.createElement('script');
                 script.id = 'dynamic-quiz-script';
-                script.src = encodePathSegments(filename) + '?v=' + Date.now();
+                const quizPath = (filename.startsWith('../') || filename.startsWith('/')) ? filename : (QUIZ_DIR + filename);
+                script.src = encodeURI(quizPath) + '?v=' + Date.now();
                 script.onload = () => {
-                    let loaded = window.quizData;
-                    if (!loaded) {
-                        try {
-                            loaded = (typeof quizData !== 'undefined') ? quizData : null;
-                        } catch (e) {
-                            loaded = null;
-                        }
-                    }
-                    if (loaded && typeof loaded === 'object') {
-                        resolve(loaded);
+                    if (window.quizData && typeof window.quizData === 'object') {
+                        resolve(window.quizData);
                     } else {
                         reject(new Error(`'${filename}' 내부에 quizData 객체가 없습니다.`));
                     }
@@ -1658,16 +1599,19 @@
         }
 
         async function loadQuizScripts(filenames) {
+            const statusEl = document.getElementById('quiz-load-status');
             const startBtn = document.getElementById('start-game-btn');
 
             if (!filenames || filenames.length === 0) {
                 window.quizData = null;
-                setQuizStatus('❌ 최소 1개 이상의 단원을 선택하세요.', '#c0392b');
+                statusEl.style.color = '#c0392b';
+                statusEl.innerText = '❌ 최소 1개 이상의 단원을 선택하세요.';
                 startBtn.disabled = true;
                 return;
             }
 
-            setQuizStatus(`⏳ ${filenames.length}개 단원 불러오는 중...`, '#f39c12');
+            statusEl.style.color = '#f39c12';
+            statusEl.innerText = `⏳ ${filenames.length}개 단원 불러오는 중...`;
             startBtn.disabled = true;
 
             const merged = { easy: [], medium: [], hard: [], required: {} };
@@ -1703,24 +1647,22 @@
             if (loadedNames.length > 0) {
                 window.quizData = merged;
                 const labelText = loadedNames.join(', ');
-                setQuizStatus(
-                    failedNames.length > 0
-                        ? `⚠️ '${labelText}' 로드 완료 (실패: ${failedNames.join(', ')})`
-                        : `✅ '${labelText}' 퀴즈 로드 완료!`,
-                    failedNames.length > 0 ? '#f39c12' : '#27ae60'
-                );
+                statusEl.style.color = failedNames.length > 0 ? '#f39c12' : '#27ae60';
+                statusEl.innerText = failedNames.length > 0
+                    ? `⚠️ '${labelText}' 로드 완료 (실패: ${failedNames.join(', ')})`
+                    : `✅ '${labelText}' 퀴즈 로드 완료!`;
                 document.getElementById('active-quiz-badge').innerText = `📚 현재 단원: ${labelText}`;
                 startBtn.disabled = false;
                 if (typeof updateTierLockUI === 'function') updateTierLockUI();
                 addLog(`📚 [${labelText}] 문제 데이터를 불러왔습니다.`, "c-s");
             } else {
                 window.quizData = null;
-                setQuizStatus(`❌ 퀴즈 파일을 불러오지 못했습니다. (${failedNames.join(', ')})`, '#c0392b', true);
-                startBtn.disabled = true;
+                statusEl.style.color = '#c0392b';
+                statusEl.innerText = `❌ 선택한 파일을 찾을 수 없습니다. (${failedNames.join(', ')})`;
             }
         }
 
-                function getShareUrl() {
+        function getShareUrl() {
             const baseUrl = window.location.origin + window.location.pathname;
             return `${baseUrl}?quiz=${encodeURIComponent(selectedQuizFiles.join(','))}`;
         }
@@ -1880,7 +1822,8 @@
             destroyCount: 0,
             problemsSolved: 0,
             freeGoldClicks: 0,
-            itemsUsed: 0
+            itemsUsed: 0,
+            totalGoldEarned: 0
         };
         let unlockedTiers = new Set();
         let solvedRequiredQs = new Set();
@@ -1947,7 +1890,8 @@
                 totalCorrectAnswers,
                 recentQuestions,
                 unlockedTiers: Array.from(unlockedTiers),
-                solvedRequiredQs: Array.from(solvedRequiredQs)
+                solvedRequiredQs: Array.from(solvedRequiredQs),
+                totalGoldEarned: playerStats.totalGoldEarned
             };
         };
 
@@ -1962,13 +1906,14 @@
             recentQuestions = state.recentQuestions ?? [];
             unlockedTiers = new Set(state.unlockedTiers ?? []);
             solvedRequiredQs = new Set(state.solvedRequiredQs ?? []);
+            playerStats.totalGoldEarned = state.totalGoldEarned ?? playerStats.totalGoldEarned ?? 0;
             updateGoldUI();
             updateItemUI();
             updateProbUI();
             updateInventoryUI();
             updateMultiplierUI();
-            updateTierLockUI();
             updateSwordShopUI();
+            updateTierLockUI();
             addLog("☁️ 클라우드에서 게임 정보를 성공적으로 불러왔습니다!", "c-s");
         };
 
@@ -2031,6 +1976,35 @@
             return gate;
         }
 
+        function isInitialRequiredLocked() {
+            return getLockedGate(0) !== null;
+        }
+
+        function syncRequiredLockButtons() {
+            const locked = isInitialRequiredLocked();
+            const mainButtons = document.querySelectorAll('#main-area button');
+            mainButtons.forEach(btn => {
+                if (btn.id === 'btn-required-quiz') return;
+                if (locked) {
+                    btn.disabled = true;
+                    btn.classList.add('req-locked-btn');
+                } else {
+                    btn.classList.remove('req-locked-btn');
+                    btn.disabled = false;
+                }
+            });
+
+            document.querySelectorAll('#inventory-panel .inv-slot').forEach(slot => {
+                slot.style.pointerEvents = locked ? 'none' : '';
+                slot.style.opacity = locked ? '0.5' : '';
+            });
+
+            if (!locked) {
+                if (typeof updateMultiplierUI === 'function') updateMultiplierUI();
+                if (typeof updateSwordShopUI === 'function') updateSwordShopUI();
+            }
+        }
+
         function updateTierLockUI() {
             const overlay = document.getElementById('tier-lock-overlay');
             const titleEl = document.getElementById('tier-lock-title');
@@ -2038,12 +2012,14 @@
             const btnEl = document.getElementById('btn-required-quiz');
             const gate = getLockedGate(currentLevel);
 
+            syncRequiredLockButtons();
+
             if (gate) {
                 if (gate.cap === 0) {
                     const allReq = getAllRequiredQuestions();
                     const solvedCount = allReq.filter(q => solvedRequiredQs.has(q.q)).length;
                     titleEl.innerText = '강화 화면 잠금';
-                    msgEl.innerHTML = `게임을 시작하려면<br>필수 문제를 모두 풀어야 합니다!<br><span style="color:#2980b9; font-size:1.1rem;">(진행도: ${solvedCount} / ${allReq.length}문제)</span>`;
+                    msgEl.innerHTML = `게임을 시작하려면<br>필수 문제를 모두 풀어야 합니다!<br><span style="color:#2980b9; font-size:1.1rem;">(진행도: ${solvedCount} / ${allReq.length}문제)</span><br><span style="display:block; margin-top:10px; color:#e74c3c; font-size:0.95rem; line-height:1.45;">※ 필수 문제는 틀리면 1번 문제부터 처음부터 다시 풀어야 합니다. 모두 맞히면 500G를 획득합니다!</span>`;
                     btnEl.innerText = '📝 필수 문제 풀기';
                 } else {
                     const diff = getGateDifficulty(gate.cap);
@@ -2062,13 +2038,12 @@
         }
 
         function openQuiz() {
+            if (isInitialRequiredLocked()) return;
             isRequiredQuiz = false;
             pendingUnlockTier = null;
-            document.getElementById('quiz-title').innerText = '과학 문제 풀기';
-            const infoMsg = document.getElementById('quiz-info-msg');
-            infoMsg.innerText = '※ 최고 강화 레벨에 따라 문제 난이도가 높아집니다. 문제를 연속으로 5개 맞추면 무작위 보상(확률 버프 또는 골드)이 부여됩니다!';
-            infoMsg.style.display = 'block';
-            document.getElementById('quiz-streak').style.display = 'block';
+            document.getElementById('quiz-title').innerText = '문제로 돈벌기';
+            document.getElementById('quiz-info-msg').style.display = 'none';
+            document.getElementById('quiz-streak').style.display = 'none';
             document.getElementById('quiz-modal').style.display = 'flex';
             startRandomQuiz();
         }
@@ -2081,19 +2056,18 @@
             }
             isRequiredQuiz = true;
             pendingUnlockTier = gate;
+            const infoMsg = document.getElementById('quiz-info-msg');
             if (gate.cap === 0) {
                 const allReq = getAllRequiredQuestions();
                 const solvedCount = allReq.filter(q => solvedRequiredQs.has(q.q)).length;
                 document.getElementById('quiz-title').innerText = `🔒 필수 문제 (${solvedCount + 1}/${allReq.length})`;
+                infoMsg.style.display = 'none';
             } else {
                 const diff = getGateDifficulty(gate.cap);
                 document.getElementById('quiz-title').innerText = `🔒 ${gate.cap}단계 해금 (${diff.label})`;
+                infoMsg.innerText = '※ 구간 해금 문제는 단 한 번의 기회만 주어지며, 틀리면 강화 단계가 1단계 하락합니다.';
+                infoMsg.style.display = 'block';
             }
-            const infoMsg = document.getElementById('quiz-info-msg');
-            infoMsg.innerText = gate.cap === 0
-                ? '※ 필수 문제는 틀리면 1번 문제부터 처음부터 다시 풀어야 합니다. 모두 맞히면 500G를 획득합니다!'
-                : '※ 구간 해금 문제는 단 한 번의 기회만 주어지며, 틀리면 강화 단계가 1단계 하락합니다.';
-            infoMsg.style.display = 'block';
             document.getElementById('quiz-streak').style.display = 'none';
             document.getElementById('quiz-modal').style.display = 'flex';
             startRandomQuiz();
@@ -2222,6 +2196,10 @@
             document.getElementById('quiz-question').style.display = 'block'; 
             document.getElementById('quiz-question').innerHTML = `Q. ${currentQuiz.q}`;
             document.getElementById('quiz-streak').innerText = `🔥 연속 정답: ${quizStreak}`;
+            if (!isRequiredQuiz) {
+                document.getElementById('quiz-info-msg').style.display = 'none';
+                document.getElementById('quiz-streak').style.display = 'none';
+            }
             document.getElementById('quiz-result-message').innerText = '';
             document.getElementById('quiz-success-actions').style.display = 'none';
             document.getElementById('quiz-abandon-btn').style.display = 'block';
@@ -2300,7 +2278,7 @@
                 const isInitialRequired = isRequiredQuiz && pendingUnlockTier && pendingUnlockTier.cap === 0;
                 
                 if (!isInitialRequired) {
-                    gold += reward;
+                    addGold(reward);
                     updateGoldUI();
                 }
                 
@@ -2324,7 +2302,7 @@
                             msg += " 🎉 실패 확률 -10% 버프 획득!";
                             addLog("🔥 5연속 정답! 1회 실패 확률 감소 버프가 적용됩니다.", "c-s");
                         } else {
-                            gold += 500;
+                            addGold(500);
                             msg += " 🎉 500 골드 보너스 획득!";
                             addLog("🔥 5연속 정답! 보너스 500 골드가 추가 지급되었습니다.", "c-s");
                             updateGoldUI();
@@ -2360,7 +2338,7 @@
                             `;
                         } else {
                             unlockedTiers.add(0);
-                            gold += 500;
+                            addGold(500);
                             updateGoldUI();
                             addLog(`🔓 [해금] 모든 필수 문제를 해결하여 강화 화면이 해금되고 500G를 획득했습니다!`, "c-s");
                             resultMsg.innerHTML = `정답입니다!<br>🔓 모든 필수 문제를 해결하여 강화가 해금되었습니다! (+500G)`;
@@ -2422,6 +2400,12 @@
         }
 
         /** --- SHOP & MONEY --- */
+        function addGold(amount) {
+            if (!Number.isFinite(amount) || amount <= 0) return;
+            gold = Math.round((gold + amount) * 10) / 10;
+            playerStats.totalGoldEarned = Math.round((playerStats.totalGoldEarned + amount) * 10) / 10;
+        }
+
         function updateGoldUI() {
             document.getElementById('gold-display').innerText = `보유 골드: ${Number(gold).toFixed(1)} G`;
         }
@@ -2505,6 +2489,10 @@
             let mult = Math.max(1, sacrificedLevel / 10);
             document.getElementById('click-multiplier-display').innerText = `x${mult.toFixed(1)}`;
             document.getElementById('sacrificed-level-display').innerText = sacrificedLevel;
+            const minSacEl = document.getElementById('sacrifice-min-level-display');
+            if (minSacEl) {
+                minSacEl.innerText = Math.max(11, sacrificedLevel + 1);
+            }
             
             const btn = document.getElementById('btn-free-gold');
             if (btn) {
@@ -2581,14 +2569,14 @@
                 addLog(`[기적!] 땅을 파다가 '장비 파괴 보호권'을 발견했습니다!`, "c-s");
             } else if (rand < 0.004) {
                 let earned = 250 * mult;
-                gold += earned;
+                addGold(earned);
                 addLog(`[초대박!] 엄청난 금화를 발견했습니다! ${earned.toFixed(1)}골드 획득!`, "c-s");
             } else if (rand < 0.054) {
                 let earned = 3 * mult;
-                gold += earned;
+                addGold(earned);
                 addLog(`[대박!] 공짜 돈벌기로 ${earned.toFixed(1)}골드를 얻었습니다!`, "c-s");
             } else {
-                gold += 1 * mult;
+                addGold(1 * mult);
             }
             
             gold = Math.round(gold * 10) / 10;
@@ -3522,6 +3510,8 @@
                 problemsSolved: playerStats.problemsSolved,
                 freeGoldClicks: playerStats.freeGoldClicks,
                 itemsUsed: playerStats.itemsUsed,
+                totalGoldEarned: playerStats.totalGoldEarned,
+                multiplier: Number(Math.max(1, sacrificedLevel / 10).toFixed(1)),
                 version: GAME_VERSION
             };
         }
@@ -3530,7 +3520,7 @@
             const s = getCurrentRankingPayload();
             const el = document.getElementById('rank-my-stats');
             if (el) {
-                el.innerHTML = `<strong>내 현재 기록 (${s.version}):</strong> 최고 <strong>Lv.${s.maxLevel}</strong> | 강화 ${s.enhanceCount}회 (대성공 ${s.greatCount} / 성공 ${s.successCount} / 유지 ${s.maintainCount} / 실패 ${s.failCount} / 파괴 ${s.destroyCount}) | 푼 문제 ${s.problemsSolved}개 | 공짜 돈벌기 ${s.freeGoldClicks}회 | 사용 아이템 ${s.itemsUsed}개`;
+                el.innerHTML = `<strong>내 현재 기록 (${s.version}):</strong> 최고 <strong>Lv.${s.maxLevel}</strong> | 강화 ${s.enhanceCount}회 (대성공 ${s.greatCount} / 성공 ${s.successCount} / 유지 ${s.maintainCount} / 실패 ${s.failCount} / 파괴 ${s.destroyCount}) | 푼 문제 ${s.problemsSolved}개 | 공짜 돈벌기 ${s.freeGoldClicks}회 | 사용 아이템 ${s.itemsUsed}개 | 획득 총 골드 ${Number(s.totalGoldEarned ?? 0).toLocaleString(undefined, { maximumFractionDigits: 1 })}G | 배율 x${Number(s.multiplier ?? 1).toFixed(1)}`;
             }
         }
 
@@ -3543,10 +3533,10 @@
         async function refreshRankings() {
             const tbody = document.getElementById('ranking-table-body');
             if (typeof window.loadFirebaseRankings !== 'function') {
-                tbody.innerHTML = '<tr><td colspan="13" style="padding:20px; color:#c0392b;">Firebase 연결을 초기화하는 중입니다. 잠시 후 다시 시도하세요.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="15" style="padding:20px; color:#c0392b;">Firebase 연결을 초기화하는 중입니다. 잠시 후 다시 시도하세요.</td></tr>';
                 return;
             }
-            tbody.innerHTML = '<tr><td colspan="13" style="padding:20px; color:#7f8c8d;">⏳ 랭킹 불러오는 중...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="15" style="padding:20px; color:#7f8c8d;">⏳ 랭킹 불러오는 중...</td></tr>';
             await window.loadFirebaseRankings();
         }
 
@@ -3581,11 +3571,8 @@
             }
         }
 
-        // Initialize (외부 폰트/CDN 로딩을 기다리지 않고 DOM 준비 즉시 실행)
-        let isGameInitialized = false;
-        function initializeGame() {
-            if (isGameInitialized) return;
-            isGameInitialized = true;
+        // Initialize
+        window.onload = function() {
             const vBadge = document.getElementById('version-badge');
             if (vBadge) vBadge.innerText = GAME_VERSION;
             initQuizSelector();
@@ -3598,12 +3585,7 @@
             updateSwordShopUI();
             requestAnimationFrame(gameLoop);
             addLog("⚔️ 검강화게임에 오신 것을 환영합니다! 0단계 필수 문제를 풀고 강화를 시작해 보세요.", "c-info");
-        }
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeGame);
-        } else {
-            initializeGame();
-        }
+        };
     </script>
 
     <!-- Firebase 실시간 랭킹 모듈 -->
@@ -3624,11 +3606,72 @@
         const db = getFirestore(app);
 
         let cachedRankingsList = [];
-        let selectedRankVersion = 'ALL';
+        let selectedRankVersion = 'ALL'; // 'ALL' | 'CURRENT' | 'LEGACY'
+        let selectedRankGrade = 'ALL';   // 'ALL' | number
+        let selectedRankClass = 'ALL';   // 'ALL' | number
+
+        function parseVersionTuple(verStr) {
+            if (!verStr || typeof verStr !== 'string') return [-1];
+            const nums = verStr.match(/\d+/g);
+            if (!nums || nums.length === 0) return [-1];
+            return nums.map(n => parseInt(n, 10));
+        }
+
+        function compareVersionTuples(aTuple, bTuple) {
+            const len = Math.max(aTuple.length, bTuple.length);
+            for (let i = 0; i < len; i++) {
+                const av = aTuple[i] ?? 0;
+                const bv = bTuple[i] ?? 0;
+                if (av !== bv) return av - bv;
+            }
+            return 0;
+        }
+
+        function getVersionBucket(recordVersion) {
+            const curVer = typeof GAME_VERSION !== 'undefined' ? String(GAME_VERSION) : 'v33.05';
+            if (!recordVersion) return 'LEGACY';
+            const recStr = String(recordVersion).trim();
+            if (recStr === curVer) return 'CURRENT';
+            const cmp = compareVersionTuples(parseVersionTuple(recStr), parseVersionTuple(curVer));
+            return cmp >= 0 ? 'CURRENT' : 'LEGACY';
+        }
+
+        function getVersionBadgeLabel(recordVersion) {
+            return getVersionBucket(recordVersion) === 'CURRENT'
+                ? (recordVersion ? String(recordVersion) : '현재 버전')
+                : '이전 버전';
+        }
+
+        function getFilteredByVersion() {
+            if (selectedRankVersion === 'ALL') return cachedRankingsList;
+            return cachedRankingsList.filter(r => getVersionBucket(r.version) === selectedRankVersion);
+        }
+
+        function getFilteredByGrade() {
+            const byVer = getFilteredByVersion();
+            if (selectedRankGrade === 'ALL') return byVer;
+            return byVer.filter(r => Number(r.grade) === Number(selectedRankGrade));
+        }
 
         window.selectRankVersion = (ver) => {
             selectedRankVersion = ver;
+            selectedRankGrade = 'ALL';
+            selectedRankClass = 'ALL';
             renderVersionFilterBar();
+            renderGradeClassFilterBar();
+            renderRankingRows();
+        };
+
+        window.selectRankGrade = (gradeVal) => {
+            selectedRankGrade = gradeVal === 'ALL' ? 'ALL' : Number(gradeVal);
+            selectedRankClass = 'ALL';
+            renderGradeClassFilterBar();
+            renderRankingRows();
+        };
+
+        window.selectRankClass = (classVal) => {
+            selectedRankClass = classVal === 'ALL' ? 'ALL' : Number(classVal);
+            renderGradeClassFilterBar();
             renderRankingRows();
         };
 
@@ -3636,43 +3679,81 @@
             const bar = document.getElementById('rank-version-filter-bar');
             if (!bar) return;
 
-            const verSet = new Set();
-            if (typeof GAME_VERSION !== 'undefined') verSet.add(GAME_VERSION);
-            cachedRankingsList.forEach(r => {
-                verSet.add(r.version ? String(r.version) : '이전 버전');
-            });
+            const curVer = typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.05';
+            const allCount = cachedRankingsList.length;
+            const currentCount = cachedRankingsList.filter(r => getVersionBucket(r.version) === 'CURRENT').length;
+            const legacyCount = cachedRankingsList.filter(r => getVersionBucket(r.version) === 'LEGACY').length;
 
-            const versions = Array.from(verSet).sort((a, b) => {
-                if (a === '이전 버전') return 1;
-                if (b === '이전 버전') return -1;
-                const na = parseInt(a.replace(/\D/g, ''), 10) || 0;
-                const nb = parseInt(b.replace(/\D/g, ''), 10) || 0;
-                return nb - na;
-            });
+            const options = [
+                { key: 'ALL', label: `전체 버전 (${allCount})` },
+                { key: 'CURRENT', label: `현재 버전 (${currentCount})` },
+                { key: 'LEGACY', label: `이전 버전 (${legacyCount})` }
+            ];
 
-            if (selectedRankVersion !== 'ALL' && !verSet.has(selectedRankVersion)) {
-                selectedRankVersion = 'ALL';
+            bar.innerHTML = options.map(opt =>
+                `<button class="rank-filter-btn ${selectedRankVersion === opt.key ? 'active' : ''}" onclick="selectRankVersion('${opt.key}')">${opt.label}</button>`
+            ).join('');
+        }
+
+        function renderGradeClassFilterBar() {
+            const bar = document.getElementById('rank-grade-class-filter-bar');
+            if (!bar) return;
+
+            const byVer = getFilteredByVersion();
+            const grades = Array.from(new Set(
+                byVer
+                    .map(r => Number(r.grade))
+                    .filter(g => Number.isFinite(g) && g > 0 && g < 1000)
+            )).sort((a, b) => a - b);
+
+            if (selectedRankGrade !== 'ALL' && !grades.includes(Number(selectedRankGrade))) {
+                selectedRankGrade = 'ALL';
+                selectedRankClass = 'ALL';
             }
 
-            const buttons = [`<button class="rank-filter-btn ${selectedRankVersion === 'ALL' ? 'active' : ''}" onclick="selectRankVersion('ALL')">전체 버전 (${cachedRankingsList.length})</button>`];
-            versions.forEach(v => {
-                const count = cachedRankingsList.filter(r => (r.version ? String(r.version) : '이전 버전') === v).length;
-                const label = (typeof GAME_VERSION !== 'undefined' && v === GAME_VERSION) ? `${v} (현재, ${count})` : `${v} (${count})`;
-                buttons.push(`<button class="rank-filter-btn ${selectedRankVersion === v ? 'active' : ''}" onclick="selectRankVersion('${v}')">${label}</button>`);
-            });
-            bar.innerHTML = buttons.join('');
+            const byGrade = getFilteredByGrade();
+            const classes = Array.from(new Set(
+                byGrade
+                    .map(r => Number(r.classNum))
+                    .filter(c => Number.isFinite(c) && c > 0 && c < 1000)
+            )).sort((a, b) => a - b);
+
+            if (selectedRankClass !== 'ALL' && !classes.includes(Number(selectedRankClass))) {
+                selectedRankClass = 'ALL';
+            }
+
+            const gradeButtons = [
+                `<span style="font-size:0.88rem; font-weight:bold; color:#34495e; margin-right:2px;">학년:</span>`,
+                `<button class="rank-filter-btn ${selectedRankGrade === 'ALL' ? 'active' : ''}" onclick="selectRankGrade('ALL')">전체 학년 (${byVer.length})</button>`,
+                ...grades.map(g => {
+                    const cnt = byVer.filter(r => Number(r.grade) === g).length;
+                    return `<button class="rank-filter-btn ${selectedRankGrade === g ? 'active' : ''}" onclick="selectRankGrade(${g})">${g}학년 (${cnt})</button>`;
+                })
+            ];
+
+            const classButtons = [
+                `<span style="font-size:0.88rem; font-weight:bold; color:#34495e; margin-left:8px; margin-right:2px;">반:</span>`,
+                `<button class="rank-filter-btn ${selectedRankClass === 'ALL' ? 'active' : ''}" onclick="selectRankClass('ALL')">전체 반 (${byGrade.length})</button>`,
+                ...classes.map(c => {
+                    const cnt = byGrade.filter(r => Number(r.classNum) === c).length;
+                    return `<button class="rank-filter-btn ${selectedRankClass === c ? 'active' : ''}" onclick="selectRankClass(${c})">${c}반 (${cnt})</button>`;
+                })
+            ];
+
+            bar.innerHTML = [...gradeButtons, ...classButtons].join('');
         }
 
         function renderRankingRows() {
             const tbody = document.getElementById('ranking-table-body');
             if (!tbody) return;
 
-            const filtered = selectedRankVersion === 'ALL'
-                ? cachedRankingsList
-                : cachedRankingsList.filter(r => (r.version ? String(r.version) : '이전 버전') === selectedRankVersion);
+            const filtered = getFilteredByGrade().filter(r => {
+                if (selectedRankClass === 'ALL') return true;
+                return Number(r.classNum) === Number(selectedRankClass);
+            });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="13" style="padding:20px; color:#7f8c8d;">해당 버전에 등록된 랭킹이 없습니다. 첫 번째로 등록해 보세요!</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="15" style="padding:20px; color:#7f8c8d;">선택한 조건에 해당하는 랭킹 기록이 없습니다.</td></tr>';
                 return;
             }
 
@@ -3685,7 +3766,7 @@
                         ? `${r.grade}${r.classNum}${String(r.number).padStart(2, '0')}`
                         : (r.label || '-'));
                 const idStyle = isTeacher ? 'font-weight:bold; color:#8e44ad;' : 'font-weight:bold; color:#2c3e50;';
-                const verLabel = r.version ? String(r.version) : '이전 버전';
+                const verLabel = getVersionBadgeLabel(r.version);
                 return `<tr>
                     <td style="font-weight:bold;">${medal}</td>
                     <td style="${idStyle}">${displayId}</td>
@@ -3700,13 +3781,15 @@
                     <td style="font-weight:bold;">${r.problemsSolved ?? 0}</td>
                     <td>${r.freeGoldClicks ?? 0}</td>
                     <td style="color:#8e44ad; font-weight:bold;">${r.itemsUsed ?? 0}</td>
+                    <td style="color:#d35400; font-weight:bold;">${Number(r.totalGoldEarned ?? 0).toLocaleString(undefined, { maximumFractionDigits: 1 })}G</td>
+                    <td style="color:#e74c3c; font-weight:bold;">x${Number(r.multiplier ?? 1).toFixed(1)}</td>
                 </tr>`;
             }).join('');
         }
 
         window.submitFirebaseRanking = async (grade, classNum, number, stats) => {
             const isTeacher = (grade === 1206 && classNum === 1206 && number === 1206);
-            const ver = stats.version || (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33');
+            const ver = stats.version || (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.05');
             const docId = isTeacher ? `teacher-1206-${ver}` : `${grade}-${classNum}-${number}-${ver}`;
             const displayLabel = isTeacher ? '과학쌤' : `${grade}${classNum}${String(number).padStart(2, '0')}`;
             const docRef = doc(db, 'rankings', docId);
@@ -3726,6 +3809,8 @@
                 problemsSolved: stats.problemsSolved,
                 freeGoldClicks: stats.freeGoldClicks,
                 itemsUsed: stats.itemsUsed ?? 0,
+                totalGoldEarned: stats.totalGoldEarned ?? 0,
+                multiplier: stats.multiplier ?? 1,
                 updatedAt: Date.now()
             });
         };
@@ -3746,10 +3831,11 @@
 
                 cachedRankingsList = list;
                 renderVersionFilterBar();
+                renderGradeClassFilterBar();
                 renderRankingRows();
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = `<tr><td colspan="13" style="padding:20px; color:#c0392b;">랭킹 불러오기 실패 (Firestore 보안 규칙을 확인해 주세요)</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="15" style="padding:20px; color:#c0392b;">랭킹 불러오기 실패 (Firestore 보안 규칙을 확인해 주세요)</td></tr>`;
             }
         };
     </script>
