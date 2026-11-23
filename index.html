@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 검강화게임 v33.05 -->
+<!-- 검강화게임 v33.06 -->
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -1030,7 +1030,7 @@
     <button id="help-btn" onclick="openHelpModal()" title="게임 방법 안내">❓ 도움말</button>
     <button id="sound-btn" onclick="toggleSound()" title="효과음 켜기/끄기">🔊 효과음</button>
     <button id="fullscreen-btn" onclick="toggleFullscreen()" title="전체화면 전환">⛶ 전체화면</button>
-    <div id="version-badge">v33.05</div>
+    <div id="version-badge">v33.06</div>
 
     <!-- Title Screen -->
     <div id="title-screen">
@@ -1377,21 +1377,21 @@
 
     <script>
         /** --- 게임 버전 정보 --- */
-        const GAME_VERSION = 'v33.05';
+        const GAME_VERSION = 'v33.06';
 
         /** --- 자동 탐색된 퀴즈 파일 목록 --- */
         let QUIZ_FILES = [];
         let selectedQuizFiles = [];
         const localQuizCache = {}; // 로컬 파일 직접 선택 시 캐시
 
-        /** --- 퀴즈 폴더 상대 경로 (검강화게임 폴더 -> 형제 quiz 폴더) --- */
-        const QUIZ_DIR = '../quiz/';
+        /** --- 퀴즈 폴더 상대 경로 (HTML 파일과 같은 폴더) --- */
+        const QUIZ_DIR = './';
 
-        /** --- quiz 폴더 내 JS 파일 자동 탐색 (GitHub Pages API -> 디렉터리 인덱스 순) --- */
+        /** --- 같은 폴더 내 JS 파일 자동 탐색 (GitHub Pages API -> 디렉터리 인덱스 순) --- */
         async function discoverQuizFiles() {
             const excluded = new Set(['qrcode.min.js']);
 
-            // 1) GitHub Pages 환경: GitHub REST API로 상위 폴더의 quiz/ 내 .js 파일 조회
+            // 1) GitHub Pages 환경: GitHub REST API로 같은 폴더 내 .js 파일 조회
             if (window.location.hostname.endsWith('.github.io')) {
                 const owner = window.location.hostname.split('.')[0];
                 const rawParts = window.location.pathname
@@ -1406,13 +1406,9 @@
 
                 const candidates = [];
                 if (rawParts.length > 0) {
-                    const repo = rawParts[0];
-                    const subParts = rawParts.slice(1);
-                    const parentParts = subParts.length > 0 ? subParts.slice(0, -1) : [];
-                    candidates.push({ repo, dir: [...parentParts, 'quiz'].join('/') });
+                    candidates.push({ repo: rawParts[0], dir: rawParts.slice(1).join('/') });
                 }
-                const userParentParts = rawParts.length > 0 ? rawParts.slice(0, -1) : [];
-                candidates.push({ repo: window.location.hostname, dir: [...userParentParts, 'quiz'].join('/') });
+                candidates.push({ repo: window.location.hostname, dir: rawParts.join('/') });
 
                 for (const c of candidates) {
                     const encodedDir = c.dir ? '/' + c.dir.split('/').map(encodeURIComponent).join('/') : '';
@@ -1436,7 +1432,7 @@
                 }
             }
 
-            // 2) 일반 웹 서버 / 로컬 서버 환경: ../quiz/ 폴더 목록 HTML 파싱
+            // 2) 일반 웹 서버 / 로컬 서버 환경: 현재 폴더 목록(./) HTML 파싱
             if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
                 try {
                     const res = await fetch(QUIZ_DIR, { cache: 'no-store' });
@@ -1466,7 +1462,7 @@
             return null;
         }
 
-                function renderQuizCheckboxes(options, checkedFiles) {
+                        function renderQuizCheckboxes(options, checkedFiles) {
             const listEl = document.getElementById('quiz-checkbox-list');
             listEl.innerHTML = '';
             if (options.length === 0) {
@@ -1526,7 +1522,7 @@
         async function initQuizSelector() {
             const statusEl = document.getElementById('quiz-load-status');
             statusEl.style.color = '#f39c12';
-            statusEl.innerText = '🔍 quiz 폴더 내 퀴즈 파일(.js)을 탐색 중...';
+            statusEl.innerText = '🔍 같은 폴더 내 퀴즈 파일(.js)을 탐색 중...';
 
             // URL 파라미터(?quiz=파일1.js,파일2.js) 확인
             const params = new URLSearchParams(window.location.search);
@@ -1584,7 +1580,7 @@
 
                 const script = document.createElement('script');
                 script.id = 'dynamic-quiz-script';
-                const quizPath = (filename.startsWith('../') || filename.startsWith('/')) ? filename : (QUIZ_DIR + filename);
+                const quizPath = (filename.startsWith('./') || filename.startsWith('../') || filename.startsWith('/')) ? filename : (QUIZ_DIR + filename);
                 script.src = encodeURI(quizPath) + '?v=' + Date.now();
                 script.onload = () => {
                     if (window.quizData && typeof window.quizData === 'object') {
@@ -3628,7 +3624,7 @@
         }
 
         function getVersionBucket(recordVersion) {
-            const curVer = typeof GAME_VERSION !== 'undefined' ? String(GAME_VERSION) : 'v33.05';
+            const curVer = typeof GAME_VERSION !== 'undefined' ? String(GAME_VERSION) : 'v33.06';
             if (!recordVersion) return 'LEGACY';
             const recStr = String(recordVersion).trim();
             if (recStr === curVer) return 'CURRENT';
@@ -3679,7 +3675,7 @@
             const bar = document.getElementById('rank-version-filter-bar');
             if (!bar) return;
 
-            const curVer = typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.05';
+            const curVer = typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.06';
             const allCount = cachedRankingsList.length;
             const currentCount = cachedRankingsList.filter(r => getVersionBucket(r.version) === 'CURRENT').length;
             const legacyCount = cachedRankingsList.filter(r => getVersionBucket(r.version) === 'LEGACY').length;
@@ -3789,7 +3785,7 @@
 
         window.submitFirebaseRanking = async (grade, classNum, number, stats) => {
             const isTeacher = (grade === 1206 && classNum === 1206 && number === 1206);
-            const ver = stats.version || (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.05');
+            const ver = stats.version || (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.06');
             const docId = isTeacher ? `teacher-1206-${ver}` : `${grade}-${classNum}-${number}-${ver}`;
             const displayLabel = isTeacher ? '과학쌤' : `${grade}${classNum}${String(number).padStart(2, '0')}`;
             const docRef = doc(db, 'rankings', docId);
