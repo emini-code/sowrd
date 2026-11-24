@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 검강화게임 v33.17 -->
+<!-- 검강화게임 v33.18 -->
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -1186,7 +1186,7 @@
     <button id="help-btn" onclick="openHelpModal()" title="게임 방법 안내">❓ 도움말</button>
     <button id="sound-btn" onclick="toggleSound()" title="효과음 켜기/끄기">🔊 효과음</button>
     <button id="fullscreen-btn" onclick="toggleFullscreen()" title="전체화면 전환">⛶ 전체화면</button>
-    <div id="version-badge">v33.17</div>
+    <div id="version-badge">v33.18</div>
 
     <!-- Title Screen -->
     <div id="title-screen">
@@ -1557,7 +1557,7 @@
 
     <script>
         /** --- 게임 버전 정보 --- */
-        const GAME_VERSION = 'v33.17';
+        const GAME_VERSION = 'v33.18';
 
         /** --- 자동 탐색된 퀴즈 파일 목록 --- */
         let QUIZ_FILES = [];
@@ -3203,23 +3203,34 @@
             ctx.strokeStyle = typeof isFever !== 'undefined' && isFever ? `hsl(${(Date.now() / 2) % 360}, 100%, 50%)` : '#2c3e50'; 
 
             if (level >= 20) {
+                const nowMs = performance.now();
+                if (!drawSwordOnContext._lvl20Cache || (nowMs - drawSwordOnContext._lvl20Cache.ts) >= 100) {
+                    const effectCount = Math.min(40, (level - 19) * 3);
+                    const shapes = [];
+                    for (let i = 0; i < effectCount; i++) {
+                        const rx = (Math.random() - 0.5) * 180;
+                        const ry = (Math.random() - 0.5) * 250 - 60;
+                        const size = Math.random() * 8 + 4;
+                        const isCross = Math.random() > 0.4;
+                        shapes.push({ rx, ry, size, isCross });
+                    }
+                    drawSwordOnContext._lvl20Cache = { ts: nowMs, level, shapes };
+                }
+                const cache = drawSwordOnContext._lvl20Cache;
                 ctx.save();
-                ctx.strokeStyle = p[0]; 
+                ctx.strokeStyle = p[0];
                 ctx.globalAlpha = 0.6;
                 ctx.lineWidth = 2;
-                const effectCount = Math.min(40, (level - 19) * 3); 
-                for (let i = 0; i < effectCount; i++) {
-                    const rx = (Math.random() - 0.5) * 180;
-                    const ry = (Math.random() - 0.5) * 250 - 60;
-                    const size = Math.random() * 8 + 4;
-                    if (Math.random() > 0.4) {
+                for (let i = 0; i < cache.shapes.length; i++) {
+                    const sh = cache.shapes[i];
+                    if (sh.isCross) {
                         ctx.beginPath();
-                        ctx.moveTo(rx - size, ry); ctx.lineTo(rx + size, ry);
-                        ctx.moveTo(rx, ry - size); ctx.lineTo(rx, ry + size);
+                        ctx.moveTo(sh.rx - sh.size, sh.ry); ctx.lineTo(sh.rx + sh.size, sh.ry);
+                        ctx.moveTo(sh.rx, sh.ry - sh.size); ctx.lineTo(sh.rx, sh.ry + sh.size);
                         ctx.stroke();
                     } else {
                         ctx.beginPath();
-                        ctx.arc(rx, ry, size, 0, Math.PI * 2);
+                        ctx.arc(sh.rx, sh.ry, sh.size, 0, Math.PI * 2);
                         ctx.fillStyle = p[1];
                         ctx.fill();
                         ctx.stroke();
@@ -4107,11 +4118,15 @@
             document.getElementById('dict-modal').style.display = 'flex';
         }
 
+        const MAX_LOG_COUNT = 100;
         function addLog(msg, className) {
             const p = document.createElement('div');
             p.className = className;
             p.innerText = `- ${msg}`;
             logContainer.prepend(p);
+            while (logContainer.children.length > MAX_LOG_COUNT) {
+                logContainer.removeChild(logContainer.lastElementChild);
+            }
         }
 
         function startGame() {
@@ -4329,7 +4344,7 @@
         }
 
         function getVersionBucket(recordVersion) {
-            const curVer = typeof GAME_VERSION !== 'undefined' ? String(GAME_VERSION) : 'v33.17';
+            const curVer = typeof GAME_VERSION !== 'undefined' ? String(GAME_VERSION) : 'v33.18';
             if (!recordVersion) return 'LEGACY';
             const recStr = String(recordVersion).trim();
             if (recStr === curVer) return 'CURRENT';
@@ -4380,7 +4395,7 @@
             const bar = document.getElementById('rank-version-filter-bar');
             if (!bar) return;
 
-            const curVer = typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.17';
+            const curVer = typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.18';
             const allCount = cachedRankingsList.length;
             const currentCount = cachedRankingsList.filter(r => getVersionBucket(r.version) === 'CURRENT').length;
             const legacyCount = cachedRankingsList.filter(r => getVersionBucket(r.version) === 'LEGACY').length;
@@ -4504,7 +4519,7 @@
 
         window.submitFirebaseRanking = async (grade, classNum, number, stats) => {
             const isTeacher = (grade === 1206 && classNum === 1206 && number === 1206);
-            const ver = stats.version || (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.17');
+            const ver = stats.version || (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.18');
             const docId = isTeacher ? `teacher-1206-${ver}` : `${grade}-${classNum}-${number}-${ver}`;
             const displayLabel = isTeacher ? '과학쌤' : `${grade}${classNum}${String(number).padStart(2, '0')}`;
             const docRef = doc(db, 'rankings', docId);
