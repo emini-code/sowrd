@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 검강화게임 v33.18 -->
+<!-- 검강화게임 v33.22 -->
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -384,13 +384,13 @@
         .dict-name { font-size: 1.3rem; margin-top: 5px; font-weight: bold; }
 
         #ranking-content {
-            width: 94%;
-            max-width: 920px;
+            width: 96%;
+            max-width: 1080px;
             height: 85%;
             background: var(--bg-color);
             border: 4px solid var(--border-color);
             box-shadow: 10px 10px 0 var(--border-color);
-            padding: 20px;
+            padding: 18px;
             overflow-y: auto;
             box-sizing: border-box;
             background-image: repeating-linear-gradient(transparent, transparent 31px, var(--line-color) 31px, var(--line-color) 32px);
@@ -461,12 +461,11 @@
         .rank-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             text-align: center;
-            white-space: nowrap;
         }
         .rank-table th, .rank-table td {
-            padding: 9px 7px;
+            padding: 7px 4px;
             border-bottom: 1px solid #e0e6ed;
         }
         .rank-table th {
@@ -475,6 +474,13 @@
             font-weight: bold;
             position: sticky;
             top: 0;
+            white-space: normal;
+            word-break: keep-all;
+            line-height: 1.25;
+            vertical-align: middle;
+        }
+        .rank-table td {
+            white-space: nowrap;
         }
         .rank-table th.sortable-th {
             cursor: pointer;
@@ -1082,12 +1088,17 @@
             box-sizing: border-box;
         }
 
-        /* 좌측 상단 고정 보유 골드 표시 */
-        #top-gold-bar {
+        /* 좌측 상단 고정 보유 골드 & 랭킹 버튼 */
+        #top-left-bar {
             position: fixed;
             top: 15px;
             left: 15px;
             z-index: 4500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #top-gold-bar {
             font-size: 1.15rem;
             font-weight: bold;
             padding: 8px 16px;
@@ -1098,6 +1109,20 @@
             box-shadow: 3px 3px 0 var(--border-color);
             pointer-events: none;
             user-select: none;
+        }
+        #top-ranking-btn {
+            font-size: 1.05rem;
+            font-weight: bold;
+            padding: 8px 14px;
+            background: #ffeaa7;
+            color: var(--text-color);
+            border: 2.5px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 3px 3px 0 var(--border-color);
+            cursor: pointer;
+        }
+        #top-ranking-btn:hover {
+            background: #f1c40f;
         }
 
         /* 우측 상단 도움말 버튼 & 모달 */
@@ -1177,16 +1202,21 @@
             #start-game-btn { font-size: 1.6rem; padding: 12px 30px; }
             #inv-sacrifice-row { flex-direction: column; }
             #help-btn { right: 15px; top: 58px; }
-            #top-gold-bar { font-size: 0.95rem; padding: 6px 10px; top: 15px; left: 10px; }
+            #top-left-bar { top: 15px; left: 10px; flex-direction: column; align-items: flex-start; gap: 6px; }
+            #top-gold-bar { font-size: 0.95rem; padding: 6px 10px; }
+            #top-ranking-btn { font-size: 0.9rem; padding: 6px 10px; }
         }
     </style>
 </head>
 <body>
-    <div id="top-gold-bar">💰 보유 골드: 0.0 G</div>
+    <div id="top-left-bar">
+        <div id="top-gold-bar">💰 보유 골드: 0.0 G</div>
+        <button id="top-ranking-btn" onclick="openRankingModal()" title="랭킹 등록 및 보기">🏆 랭킹 등록/보기</button>
+    </div>
     <button id="help-btn" onclick="openHelpModal()" title="게임 방법 안내">❓ 도움말</button>
     <button id="sound-btn" onclick="toggleSound()" title="효과음 켜기/끄기">🔊 효과음</button>
     <button id="fullscreen-btn" onclick="toggleFullscreen()" title="전체화면 전환">⛶ 전체화면</button>
-    <div id="version-badge">v33.18</div>
+    <div id="version-badge">v33.22</div>
 
     <!-- Title Screen -->
     <div id="title-screen">
@@ -1274,17 +1304,17 @@
                             <th>순위</th>
                             <th>학번</th>
                             <th>버전</th>
-                            <th class="sortable-th sort-active" data-sort="maxLevel" onclick="toggleRankSort('maxLevel')">최고 Lv<span class="sort-arrow">▼</span></th>
+                            <th class="sortable-th sort-active" data-sort="maxLevel" onclick="toggleRankSort('maxLevel')">최고<br>Lv<span class="sort-arrow">▼</span></th>
                             <th class="sortable-th" data-sort="enhanceCount" onclick="toggleRankSort('enhanceCount')">강화<span class="sort-arrow">⇅</span></th>
                             <th class="sortable-th" data-sort="greatCount" onclick="toggleRankSort('greatCount')">대성공<span class="sort-arrow">⇅</span></th>
                             <th class="sortable-th" data-sort="successCount" onclick="toggleRankSort('successCount')">성공<span class="sort-arrow">⇅</span></th>
                             <th class="sortable-th" data-sort="maintainCount" onclick="toggleRankSort('maintainCount')">유지<span class="sort-arrow">⇅</span></th>
                             <th class="sortable-th" data-sort="failCount" onclick="toggleRankSort('failCount')">실패<span class="sort-arrow">⇅</span></th>
                             <th class="sortable-th" data-sort="destroyCount" onclick="toggleRankSort('destroyCount')">파괴<span class="sort-arrow">⇅</span></th>
-                            <th class="sortable-th" data-sort="problemsSolved" onclick="toggleRankSort('problemsSolved')">푼 문제<span class="sort-arrow">⇅</span></th>
-                            <th class="sortable-th" data-sort="freeGoldClicks" onclick="toggleRankSort('freeGoldClicks')">공짜 클릭<span class="sort-arrow">⇅</span></th>
+                            <th class="sortable-th" data-sort="problemsSolved" onclick="toggleRankSort('problemsSolved')">푼<br>문제<span class="sort-arrow">⇅</span></th>
+                            <th class="sortable-th" data-sort="freeGoldClicks" onclick="toggleRankSort('freeGoldClicks')">공짜<br>클릭<span class="sort-arrow">⇅</span></th>
                             <th class="sortable-th" data-sort="itemsUsed" onclick="toggleRankSort('itemsUsed')">아이템<span class="sort-arrow">⇅</span></th>
-                            <th class="sortable-th" data-sort="totalGoldEarned" onclick="toggleRankSort('totalGoldEarned')">총 골드<span class="sort-arrow">⇅</span></th>
+                            <th class="sortable-th" data-sort="totalGoldEarned" onclick="toggleRankSort('totalGoldEarned')">총<br>골드<span class="sort-arrow">⇅</span></th>
                             <th class="sortable-th" data-sort="multiplier" onclick="toggleRankSort('multiplier')">배율<span class="sort-arrow">⇅</span></th>
                         </tr>
                     </thead>
@@ -1396,7 +1426,6 @@
             <div class="btn-group">
                 <button onclick="saveToInventory()">인벤토리에 보관</button>
                 <button onclick="openDictionary()">도감 보기</button>
-                <button onclick="openRankingModal()" style="background:#ffeaa7;">🏆 랭킹 등록/보기</button>
             </div>
             
             <!-- Inventory & Sacrifice -->
@@ -1557,7 +1586,7 @@
 
     <script>
         /** --- 게임 버전 정보 --- */
-        const GAME_VERSION = 'v33.18';
+        const GAME_VERSION = 'v33.22';
 
         /** --- 자동 탐색된 퀴즈 파일 목록 --- */
         let QUIZ_FILES = [];
@@ -2221,11 +2250,11 @@
                 return;
             }
             wrap.style.display = 'block';
-            const filled = quizStreak === 0 ? 0 : (((quizStreak - 1) % 15) + 1);
+            const filled = Math.min(15, quizStreak);
             const countEl = document.getElementById('streak-gauge-count');
             const stepEl = document.getElementById('streak-gauge-step');
             if (countEl) countEl.innerText = `🔥 연속 정답: ${quizStreak}`;
-            if (stepEl) stepEl.innerText = `${filled} / 15칸`;
+            if (stepEl) stepEl.innerText = quizStreak >= 15 ? '15 / 15칸 (최대)' : `${filled} / 15칸`;
 
             const cellsEl = document.getElementById('streak-gauge-cells');
             if (cellsEl) {
@@ -2500,21 +2529,20 @@
                     totalCorrectAnswers++;
                     updateMultiplierUI();
                     quizStreak++;
-                    const cyclePos = ((quizStreak - 1) % 15) + 1;
                     let msg = `[정답] +${reward.toFixed(1)}G! (연속 ${quizStreak}회)`;
-                    if (cyclePos === 5) {
+                    if (quizStreak === 5) {
                         addGold(500);
                         streakRewardMsg = '🎉 5연속 정답 달성! 보너스 500G를 획득했습니다!';
                         msg += " 🎉 500 골드 보너스 획득!";
                         addLog("🔥 5연속 정답! 보너스 500 골드가 추가 지급되었습니다.", "c-s");
                         updateGoldUI();
-                    } else if (cyclePos === 10) {
+                    } else if (quizStreak === 10) {
                         activeBuffs.fail_reduce = true;
                         streakRewardMsg = '🎉 10연속 정답 달성! 실패 확률이 -10% 감소했습니다!';
                         msg += " 🎉 실패 확률 -10% 버프 획득!";
                         addLog("🔥 10연속 정답! 1회 실패 확률 감소(-10%) 버프가 적용됩니다.", "c-s");
                         updateProbUI();
-                    } else if (cyclePos === 15) {
+                    } else if (quizStreak === 15) {
                         activeBuffs.success = true;
                         streakRewardMsg = '🎉 15연속 정답 달성! 성공 확률이 +10% 증가했습니다!';
                         msg += " 🎉 성공 확률 +10% 버프 획득!";
@@ -3204,7 +3232,7 @@
 
             if (level >= 20) {
                 const nowMs = performance.now();
-                if (!drawSwordOnContext._lvl20Cache || (nowMs - drawSwordOnContext._lvl20Cache.ts) >= 100) {
+                if (!drawSwordOnContext._lvl20Cache || (nowMs - drawSwordOnContext._lvl20Cache.ts) >= (1000 / 30)) {
                     const effectCount = Math.min(40, (level - 19) * 3);
                     const shapes = [];
                     for (let i = 0; i < effectCount; i++) {
@@ -4344,7 +4372,7 @@
         }
 
         function getVersionBucket(recordVersion) {
-            const curVer = typeof GAME_VERSION !== 'undefined' ? String(GAME_VERSION) : 'v33.18';
+            const curVer = typeof GAME_VERSION !== 'undefined' ? String(GAME_VERSION) : 'v33.22';
             if (!recordVersion) return 'LEGACY';
             const recStr = String(recordVersion).trim();
             if (recStr === curVer) return 'CURRENT';
@@ -4395,7 +4423,7 @@
             const bar = document.getElementById('rank-version-filter-bar');
             if (!bar) return;
 
-            const curVer = typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.18';
+            const curVer = typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.22';
             const allCount = cachedRankingsList.length;
             const currentCount = cachedRankingsList.filter(r => getVersionBucket(r.version) === 'CURRENT').length;
             const legacyCount = cachedRankingsList.filter(r => getVersionBucket(r.version) === 'LEGACY').length;
@@ -4519,7 +4547,7 @@
 
         window.submitFirebaseRanking = async (grade, classNum, number, stats) => {
             const isTeacher = (grade === 1206 && classNum === 1206 && number === 1206);
-            const ver = stats.version || (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.18');
+            const ver = stats.version || (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.22');
             const docId = isTeacher ? `teacher-1206-${ver}` : `${grade}-${classNum}-${number}-${ver}`;
             const displayLabel = isTeacher ? '과학쌤' : `${grade}${classNum}${String(number).padStart(2, '0')}`;
             const docRef = doc(db, 'rankings', docId);
