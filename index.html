@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 검강화게임 v33.06 -->
+<!-- 검강화게임 v33.15 -->
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -84,6 +84,7 @@
         }
 
         canvas {
+            cursor: pointer;
             border: 4px solid var(--border-color);
             border-radius: 10px;
             background: #fff;
@@ -475,6 +476,26 @@
             position: sticky;
             top: 0;
         }
+        .rank-table th.sortable-th {
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+        }
+        .rank-table th.sortable-th:hover {
+            background: #2c3e50;
+        }
+        .rank-table th.sortable-th.sort-active {
+            background: #1f618d;
+        }
+        .sort-arrow {
+            font-size: 0.78rem;
+            margin-left: 3px;
+            opacity: 0.75;
+        }
+        .rank-table th.sort-active .sort-arrow {
+            opacity: 1;
+            color: #f1c40f;
+        }
         .rank-table tr:nth-child(even) {
             background: #f9fafb;
         }
@@ -554,6 +575,88 @@
         .quiz-btn:active { transform: scale(0.95); }
         #quiz-choices button {
             display: block; width: 100%; margin: 10px 0; text-align: left; padding-left: 20px; box-sizing: border-box;
+        }
+        /* 15칸 연속 정답 게이지 */
+        #quiz-streak-gauge-wrap {
+            display: none;
+            margin: 8px 0 16px 0;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        .streak-gauge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 8px;
+        }
+        .streak-gauge-cells {
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+        .streak-cell {
+            height: 18px;
+            background: #ecf0f1;
+            border: 2px solid #bdc3c7;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+        .streak-cell.tier-1.filled {
+            background: #f1c40f;
+            border-color: #d68910;
+            box-shadow: 0 0 6px rgba(241, 196, 15, 0.55);
+        }
+        .streak-cell.tier-2.filled {
+            background: #3498db;
+            border-color: #21618c;
+            box-shadow: 0 0 6px rgba(52, 152, 219, 0.55);
+        }
+        .streak-cell.tier-3.filled {
+            background: #2ecc71;
+            border-color: #1e8449;
+            box-shadow: 0 0 6px rgba(46, 204, 113, 0.55);
+        }
+        .streak-cell.milestone {
+            border-width: 2.5px;
+        }
+        .streak-milestones {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            font-size: 0.82rem;
+            font-weight: bold;
+        }
+        .streak-milestone-tag {
+            padding: 3px 4px;
+            border-radius: 5px;
+            background: #f4f6f7;
+            color: #7f8c8d;
+            border: 1.5px solid #d5dbdb;
+            text-align: center;
+            word-break: keep-all;
+        }
+        .streak-milestone-tag.reached-1 {
+            background: #fef9e7;
+            color: #b7950b;
+            border-color: #f1c40f;
+        }
+        .streak-milestone-tag.reached-2 {
+            background: #ebf5fb;
+            color: #1f618d;
+            border-color: #3498db;
+        }
+        .streak-milestone-tag.reached-3 {
+            background: #e8f8f5;
+            color: #1e8449;
+            border-color: #2ecc71;
         }
         @media (min-width: 700px) {
             #quiz-content {
@@ -639,6 +742,39 @@
             font-size: 1.25rem;
             font-weight: bold;
             padding: 10px 16px;
+        }
+
+        /* Enhance Confirm Modal (Lv.30+) */
+        #enhance-confirm-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2100;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #enhance-confirm-content {
+            background: var(--bg-color);
+            border: 4px solid var(--border-color);
+            padding: 28px 24px;
+            border-radius: 10px;
+            text-align: center;
+            width: 100%;
+            max-width: 430px;
+            box-sizing: border-box;
+            box-shadow: 8px 8px 0 var(--border-color);
+            background-image: repeating-linear-gradient(transparent, transparent 31px, var(--line-color) 31px, var(--line-color) 32px);
+        }
+        #enhance-confirm-message {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 22px;
+            color: var(--text-color);
+            line-height: 1.6;
+            word-break: keep-all;
         }
 
         /* QR Modal */
@@ -946,6 +1082,24 @@
             box-sizing: border-box;
         }
 
+        /* 좌측 상단 고정 보유 골드 표시 */
+        #top-gold-bar {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 4500;
+            font-size: 1.15rem;
+            font-weight: bold;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.94);
+            color: #d35400;
+            border: 2.5px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 3px 3px 0 var(--border-color);
+            pointer-events: none;
+            user-select: none;
+        }
+
         /* 우측 상단 도움말 버튼 & 모달 */
         #help-btn {
             position: fixed;
@@ -1023,14 +1177,16 @@
             #start-game-btn { font-size: 1.6rem; padding: 12px 30px; }
             #inv-sacrifice-row { flex-direction: column; }
             #help-btn { right: 15px; top: 58px; }
+            #top-gold-bar { font-size: 0.95rem; padding: 6px 10px; top: 15px; left: 10px; }
         }
     </style>
 </head>
 <body>
+    <div id="top-gold-bar">💰 보유 골드: 0.0 G</div>
     <button id="help-btn" onclick="openHelpModal()" title="게임 방법 안내">❓ 도움말</button>
     <button id="sound-btn" onclick="toggleSound()" title="효과음 켜기/끄기">🔊 효과음</button>
     <button id="fullscreen-btn" onclick="toggleFullscreen()" title="전체화면 전환">⛶ 전체화면</button>
-    <div id="version-badge">v33.06</div>
+    <div id="version-badge">v33.15</div>
 
     <!-- Title Screen -->
     <div id="title-screen">
@@ -1056,7 +1212,7 @@
                 <ul>
                     <li><strong>강화하기:</strong> [망치질 하기!] 버튼을 눌러 구간별 골드(0~10강 50G / 11~20강 100G / 21~30강 200G / 31강 이상 500G)를 소모해 검을 최대 40단계까지 강화하세요.</li>
                     <li><strong>필수 문제 &amp; 구간 해금:</strong> 게임 시작 시 필수 문제를 모두 맞히면 강화가 해금되고 <strong>500G</strong>를 획득합니다. (오답 시 1번 문제부터 처음부터 다시 풀이) 이후 5·10단계(하), 15·20단계(중), 25단계 이상(상) 구간 해금 문제를 통과해야 다음 단계로 강화할 수 있습니다. (기회 1회, 오답 시 1단계 하락)</li>
-                    <li><strong>돈벌기 &amp; 퀴즈:</strong> [돈벌기] 탭에서 과학 퀴즈를 풀면 250G(배율 적용)를 얻으며, 5연속 정답 시 랜덤 버프 또는 보너스 골드를 받습니다. 퀴즈 10문제를 맞히면 [공짜로 돈벌기]가 해금됩니다.</li>
+                    <li><strong>돈벌기 &amp; 퀴즈:</strong> [돈벌기] 탭에서 과학 퀴즈를 풀면 250G(배율 적용)를 얻으며, 연속 정답 게이지를 채워 5연속(+500G), 10연속(실패 확률 -10%), 15연속(성공 확률 +10%) 보상을 순서대로 받습니다. 퀴즈 10문제를 맞히면 [공짜로 돈벌기]가 해금됩니다.</li>
                     <li><strong>상점 &amp; 검 상점:</strong> 물약, 장비 파괴 보호권(35단계까지 파괴 방지, 3,000G), 파괴 완화권(15단계 이상, 파괴 시 -10단계, 1,000G)을 구매할 수 있으며, 최고 도달 레벨(10·20·30단계)에 따라 [검 상점]에서 해당 단계 검을 직접 구매할 수 있습니다.</li>
                     <li><strong>희생, 보관 &amp; 재물:</strong> 11단계 이상의 검을 희생하면 퀴즈와 공짜 돈벌기 배율이 영구 증가합니다. 인벤토리에 보관한 검은 꺼내 쓰거나 <strong>[검 재물로 바치기]</strong>로 소모해 강화 성공 확률 증가·실패 확률 감소 효과를 얻을 수 있습니다.</li>
                     <li><strong>피버 타임:</strong> 강화 시 '유지'가 5연속 나오면 3초간 골드 소모 없이 0.5초마다 광클 강화가 가능합니다!</li>
@@ -1118,18 +1274,18 @@
                             <th>순위</th>
                             <th>학번</th>
                             <th>버전</th>
-                            <th>최고 Lv</th>
-                            <th>강화</th>
-                            <th>대성공</th>
-                            <th>성공</th>
-                            <th>유지</th>
-                            <th>실패</th>
-                            <th>파괴</th>
-                            <th>푼 문제</th>
-                            <th>공짜 클릭</th>
-                            <th>아이템</th>
-                            <th>총 골드</th>
-                            <th>배율</th>
+                            <th class="sortable-th sort-active" data-sort="maxLevel" onclick="toggleRankSort('maxLevel')">최고 Lv<span class="sort-arrow">▼</span></th>
+                            <th class="sortable-th" data-sort="enhanceCount" onclick="toggleRankSort('enhanceCount')">강화<span class="sort-arrow">⇅</span></th>
+                            <th class="sortable-th" data-sort="greatCount" onclick="toggleRankSort('greatCount')">대성공<span class="sort-arrow">⇅</span></th>
+                            <th class="sortable-th" data-sort="successCount" onclick="toggleRankSort('successCount')">성공<span class="sort-arrow">⇅</span></th>
+                            <th class="sortable-th" data-sort="maintainCount" onclick="toggleRankSort('maintainCount')">유지<span class="sort-arrow">⇅</span></th>
+                            <th class="sortable-th" data-sort="failCount" onclick="toggleRankSort('failCount')">실패<span class="sort-arrow">⇅</span></th>
+                            <th class="sortable-th" data-sort="destroyCount" onclick="toggleRankSort('destroyCount')">파괴<span class="sort-arrow">⇅</span></th>
+                            <th class="sortable-th" data-sort="problemsSolved" onclick="toggleRankSort('problemsSolved')">푼 문제<span class="sort-arrow">⇅</span></th>
+                            <th class="sortable-th" data-sort="freeGoldClicks" onclick="toggleRankSort('freeGoldClicks')">공짜 클릭<span class="sort-arrow">⇅</span></th>
+                            <th class="sortable-th" data-sort="itemsUsed" onclick="toggleRankSort('itemsUsed')">아이템<span class="sort-arrow">⇅</span></th>
+                            <th class="sortable-th" data-sort="totalGoldEarned" onclick="toggleRankSort('totalGoldEarned')">총 골드<span class="sort-arrow">⇅</span></th>
+                            <th class="sortable-th" data-sort="multiplier" onclick="toggleRankSort('multiplier')">배율<span class="sort-arrow">⇅</span></th>
                         </tr>
                     </thead>
                     <tbody id="ranking-table-body">
@@ -1144,10 +1300,22 @@
     <!-- Quiz Modal -->
     <div id="quiz-modal">
         <div id="quiz-content">
-            <h2 id="quiz-title" style="font-size: 1.9rem; margin-top:0; background:#fff; border: 2px solid #333; display:inline-block; padding:5px 20px;">문제로 돈벌기</h2>
-            <p id="quiz-info-msg" style="font-size: 0.9rem; color: #e74c3c; margin-top: 10px; margin-bottom: 10px; text-align: center; word-break:keep-all; font-weight: bold;">※ 최고 강화 레벨에 따라 문제 난이도가 높아집니다. 문제를 연속으로 5개 맞추면 무작위 보상(확률 버프 또는 골드)이 부여됩니다!</p>
+            <h2 id="quiz-title" style="font-size: 1.9rem; margin-top:0; background:#fff; border: 2px solid #333; display:inline-block; padding:5px 20px;">퀴즈로 돈벌기</h2>
+            <p id="quiz-info-msg" style="font-size: 0.9rem; color: #e74c3c; margin-top: 10px; margin-bottom: 10px; text-align: center; word-break:keep-all; font-weight: bold;">※ 연속 정답 5회: +500G / 10회: 실패 확률 -10% / 15회: 성공 확률 +10% 버프가 적용됩니다!</p>
             <div id="quiz-play" style="display:none;">
-                <div id="quiz-streak" style="font-size: 1.0rem; color: #e74c3c; margin-bottom: 10px; font-weight: bold;">🔥 연속 정답: 0</div>
+                <div id="quiz-streak" style="display:none; font-size: 1.0rem; color: #e74c3c; margin-bottom: 10px; font-weight: bold;">🔥 연속 정답: 0</div>
+                <div id="quiz-streak-gauge-wrap">
+                    <div class="streak-gauge-header">
+                        <span id="streak-gauge-count" style="color:#e74c3c;">🔥 연속 정답: 0</span>
+                        <span id="streak-gauge-step" style="color:#7f8c8d;">0 / 15칸</span>
+                    </div>
+                    <div id="streak-gauge-cells" class="streak-gauge-cells"></div>
+                    <div class="streak-milestones">
+                        <div id="ms-tag-5" class="streak-milestone-tag">5칸: 💰 +500G</div>
+                        <div id="ms-tag-10" class="streak-milestone-tag">10칸: 🛡️ 실패 -10%</div>
+                        <div id="ms-tag-15" class="streak-milestone-tag">15칸: ⭐ 성공 +10%</div>
+                    </div>
+                </div>
                 <div id="quiz-question" style="font-size: 1.35rem; margin-bottom: 20px; font-weight:bold; background:rgba(255,255,255,0.8); padding:10px; border-radius:5px; word-break:keep-all;">문제 내용</div>
                 
                 <div id="quiz-input-area" style="display:none;">
@@ -1187,6 +1355,18 @@
             <div class="sacrifice-confirm-actions">
                 <button onclick="confirmSacrificeSword()" style="background:#9b59b6; color:#fff; border-color:#6c3483; box-shadow:3px 3px 0 #6c3483;">희생하기</button>
                 <button onclick="closeSacrificeConfirm()" style="background:#ecf0f1; color:#2c3e50;">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhance Confirm Modal (Lv.30+) -->
+    <div id="enhance-confirm-modal" onclick="if(event.target === this) closeEnhanceConfirm()">
+        <div id="enhance-confirm-content">
+            <div style="font-size: 2.2rem; margin-bottom: 8px;">⚠️🔨</div>
+            <div id="enhance-confirm-message">정말 강화를 진행하시겠습니까?</div>
+            <div class="sacrifice-confirm-actions">
+                <button onclick="confirmEnhance()" style="background:#f1c40f; color:#2c3e50; border-color:#b7950b; box-shadow:3px 3px 0 #b7950b;">강화하기</button>
+                <button onclick="closeEnhanceConfirm()" style="background:#ecf0f1; color:#2c3e50;">취소</button>
             </div>
         </div>
     </div>
@@ -1368,7 +1548,7 @@
                 </div>
 
                 <div id="content-earn" style="display:flex; flex-direction:column; gap:10px; margin-bottom: 15px; border:2px dashed var(--border-color); padding:15px; background:#fff; border-radius:5px; box-sizing:border-box;">
-                    <button onclick="openQuiz()" style="font-size:1.5rem; width:100%; padding:10px; background:#3498db; color:#fff; border:2px solid #2980b9; border-radius:5px; font-weight:bold; cursor:pointer; box-sizing:border-box;">📝 퀴즈로 돈벌기</button>
+                    <button id="btn-quiz-gold" onclick="openQuiz()" style="font-size:1.5rem; width:100%; padding:10px; background:#3498db; color:#fff; border:2px solid #2980b9; border-radius:5px; font-weight:bold; cursor:pointer; box-sizing:border-box;">📝 퀴즈로 돈벌기 (x1.0)</button>
                     <button id="btn-free-gold" onclick="earnFreeGold()" style="font-size:1.5rem; width:100%; padding:10px; background:#2ecc71; color:#fff; border:2px solid #27ae60; border-radius:5px; font-weight:bold; cursor:pointer; box-sizing:border-box;">👆 공짜로 돈벌기</button>
                 </div>
             </div>
@@ -1377,7 +1557,7 @@
 
     <script>
         /** --- 게임 버전 정보 --- */
-        const GAME_VERSION = 'v33.06';
+        const GAME_VERSION = 'v33.15';
 
         /** --- 자동 탐색된 퀴즈 파일 목록 --- */
         let QUIZ_FILES = [];
@@ -1858,7 +2038,7 @@
         let wasSuspense = false;
 
         let quizStreak = 0;
-        let activeBuff = null;
+        let activeBuffs = { success: false, fail_reduce: false };
         let maintainStreak = 0;
         let isFever = false;
         let feverTime = 0;
@@ -2033,13 +2213,48 @@
             }
         }
 
+        function updateStreakGaugeUI() {
+            const wrap = document.getElementById('quiz-streak-gauge-wrap');
+            if (!wrap) return;
+            if (isRequiredQuiz) {
+                wrap.style.display = 'none';
+                return;
+            }
+            wrap.style.display = 'block';
+            const filled = quizStreak === 0 ? 0 : (((quizStreak - 1) % 15) + 1);
+            const countEl = document.getElementById('streak-gauge-count');
+            const stepEl = document.getElementById('streak-gauge-step');
+            if (countEl) countEl.innerText = `🔥 연속 정답: ${quizStreak}`;
+            if (stepEl) stepEl.innerText = `${filled} / 15칸`;
+
+            const cellsEl = document.getElementById('streak-gauge-cells');
+            if (cellsEl) {
+                let cellsHtml = '';
+                for (let i = 1; i <= 15; i++) {
+                    const tier = i <= 5 ? 'tier-1' : (i <= 10 ? 'tier-2' : 'tier-3');
+                    const isMilestone = (i === 5 || i === 10 || i === 15) ? ' milestone' : '';
+                    const isFilled = i <= filled ? ' filled' : '';
+                    cellsHtml += `<div class="streak-cell ${tier}${isMilestone}${isFilled}" title="${i}연속"></div>`;
+                }
+                cellsEl.innerHTML = cellsHtml;
+            }
+
+            const ms5 = document.getElementById('ms-tag-5');
+            const ms10 = document.getElementById('ms-tag-10');
+            const ms15 = document.getElementById('ms-tag-15');
+            if (ms5) ms5.className = 'streak-milestone-tag' + (filled >= 5 ? ' reached-1' : '');
+            if (ms10) ms10.className = 'streak-milestone-tag' + (filled >= 10 ? ' reached-2' : '');
+            if (ms15) ms15.className = 'streak-milestone-tag' + (filled >= 15 ? ' reached-3' : '');
+        }
+
         function openQuiz() {
             if (isInitialRequiredLocked()) return;
             isRequiredQuiz = false;
             pendingUnlockTier = null;
-            document.getElementById('quiz-title').innerText = '문제로 돈벌기';
+            document.getElementById('quiz-title').innerText = '퀴즈로 돈벌기';
             document.getElementById('quiz-info-msg').style.display = 'none';
             document.getElementById('quiz-streak').style.display = 'none';
+            updateStreakGaugeUI();
             document.getElementById('quiz-modal').style.display = 'flex';
             startRandomQuiz();
         }
@@ -2065,6 +2280,7 @@
                 infoMsg.style.display = 'block';
             }
             document.getElementById('quiz-streak').style.display = 'none';
+            updateStreakGaugeUI();
             document.getElementById('quiz-modal').style.display = 'flex';
             startRandomQuiz();
         }
@@ -2192,6 +2408,7 @@
             document.getElementById('quiz-question').style.display = 'block'; 
             document.getElementById('quiz-question').innerHTML = `Q. ${currentQuiz.q}`;
             document.getElementById('quiz-streak').innerText = `🔥 연속 정답: ${quizStreak}`;
+            updateStreakGaugeUI();
             if (!isRequiredQuiz) {
                 document.getElementById('quiz-info-msg').style.display = 'none';
                 document.getElementById('quiz-streak').style.display = 'none';
@@ -2278,31 +2495,30 @@
                     updateGoldUI();
                 }
                 
+                let streakRewardMsg = '';
                 if (!isRequiredQuiz) {
                     totalCorrectAnswers++;
                     updateMultiplierUI();
                     quizStreak++;
+                    const cyclePos = ((quizStreak - 1) % 15) + 1;
                     let msg = `[정답] +${reward.toFixed(1)}G! (연속 ${quizStreak}회)`;
-                    if (quizStreak > 0 && quizStreak % 5 === 0) {
-                        let r = Math.random();
-                        if (r < 0.25) {
-                            activeBuff = 'great_success';
-                            msg += " 🎉 대성공 확률 +10% 버프 획득!";
-                            addLog("🔥 5연속 정답! 1회 대성공 확률 증가 버프가 적용됩니다.", "c-s");
-                        } else if (r < 0.5) {
-                            activeBuff = 'success';
-                            msg += " 🎉 성공 확률 +10% 버프 획득!";
-                            addLog("🔥 5연속 정답! 1회 성공 확률 증가 버프가 적용됩니다.", "c-s");
-                        } else if (r < 0.75) {
-                            activeBuff = 'fail_reduce';
-                            msg += " 🎉 실패 확률 -10% 버프 획득!";
-                            addLog("🔥 5연속 정답! 1회 실패 확률 감소 버프가 적용됩니다.", "c-s");
-                        } else {
-                            addGold(500);
-                            msg += " 🎉 500 골드 보너스 획득!";
-                            addLog("🔥 5연속 정답! 보너스 500 골드가 추가 지급되었습니다.", "c-s");
-                            updateGoldUI();
-                        }
+                    if (cyclePos === 5) {
+                        addGold(500);
+                        streakRewardMsg = '🎉 5연속 정답 달성! 보너스 500G를 획득했습니다!';
+                        msg += " 🎉 500 골드 보너스 획득!";
+                        addLog("🔥 5연속 정답! 보너스 500 골드가 추가 지급되었습니다.", "c-s");
+                        updateGoldUI();
+                    } else if (cyclePos === 10) {
+                        activeBuffs.fail_reduce = true;
+                        streakRewardMsg = '🎉 10연속 정답 달성! 실패 확률이 -10% 감소했습니다!';
+                        msg += " 🎉 실패 확률 -10% 버프 획득!";
+                        addLog("🔥 10연속 정답! 1회 실패 확률 감소(-10%) 버프가 적용됩니다.", "c-s");
+                        updateProbUI();
+                    } else if (cyclePos === 15) {
+                        activeBuffs.success = true;
+                        streakRewardMsg = '🎉 15연속 정답 달성! 성공 확률이 +10% 증가했습니다!';
+                        msg += " 🎉 성공 확률 +10% 버프 획득!";
+                        addLog("🔥 15연속 정답! 1회 성공 확률 증가(+10%) 버프가 적용됩니다.", "c-s");
                         updateProbUI();
                     }
                     addLog(msg, "c-info");
@@ -2348,13 +2564,16 @@
                     }
                     updateTierLockUI();
                 } else {
-                    resultMsg.innerText = `정답입니다! (+${reward}G)`;
+                    resultMsg.innerHTML = streakRewardMsg
+                        ? `정답입니다! (+${reward}G)<br><span style="color:#8e44ad; display:inline-block; margin-top:8px;">${streakRewardMsg}</span>`
+                        : `정답입니다! (+${reward}G)`;
                     successActions.innerHTML = `
                         <button class="quiz-btn" onclick="startRandomQuiz()" style="background:#27ae60; color:white; margin:0; flex:1;">계속 풀기</button>
                         <button class="quiz-btn" onclick="closeQuiz()" style="background:#e74c3c; color:white; margin:0; flex:1;">그만 풀기</button>
                     `;
                 }
                 document.getElementById('quiz-streak').innerText = `🔥 연속 정답: ${quizStreak}`;
+                updateStreakGaugeUI();
                 successActions.style.display = 'flex';
                 triggerAutoSave();
             } else {
@@ -2403,7 +2622,10 @@
         }
 
         function updateGoldUI() {
-            document.getElementById('gold-display').innerText = `보유 골드: ${Number(gold).toFixed(1)} G`;
+            const goldText = `보유 골드: ${Number(gold).toFixed(1)} G`;
+            document.getElementById('gold-display').innerText = goldText;
+            const topGoldEl = document.getElementById('top-gold-bar');
+            if (topGoldEl) topGoldEl.innerText = `💰 ${goldText}`;
         }
 
         function switchTab(tab) {
@@ -2459,13 +2681,22 @@
                 addLog(`🔒 Lv.${targetLvl}에 도달해야 구매할 수 있습니다!`, "c-d");
                 return;
             }
-            if (currentLevel >= targetLvl) {
-                addLog(`현재 장착 중인 검(Lv.${currentLevel})이 Lv.${targetLvl} 이상입니다. 인벤토리에 보관 후 구매하세요.`, "c-f");
-                return;
-            }
             if (gold < price) {
                 addLog(`골드가 부족합니다! (${price.toLocaleString()}G 필요)`, "c-d");
                 return;
+            }
+
+            let storedPrevLevel = null;
+            if (currentLevel > 0) {
+                const emptyIdx = inventory.indexOf(null);
+                if (emptyIdx === -1) {
+                    addLog("인벤토리가 가득 차서 현재 검을 보관할 수 없습니다! 인벤토리를 비운 후 구매하세요.", "c-d");
+                    document.getElementById('custom-alert-message').innerText = "인벤토리가 가득 차서 검을 구매할 수 없습니다!\n인벤토리에 빈 공간을 만든 후 다시 시도해 주세요.";
+                    document.getElementById('custom-alert-modal').style.display = 'flex';
+                    return;
+                }
+                storedPrevLevel = currentLevel;
+                inventory[emptyIdx] = storedPrevLevel;
             }
 
             gold -= price;
@@ -2473,11 +2704,16 @@
             currentLevel = targetLvl;
             unlockedLevels.add(targetLvl);
             syncItemAvailability();
+            updateInventoryUI();
             updateGoldUI();
             updateProbUI();
             updateTierLockUI();
             updateSwordShopUI();
-            addLog(`🗡️ 검 상점에서 Lv.${targetLvl} ${getSwordName(targetLvl)}을(를) 구매했습니다! (-${price.toLocaleString()}G)`, "c-s");
+            if (storedPrevLevel !== null) {
+                addLog(`📦 기존 Lv.${storedPrevLevel} 검을 인벤토리에 보관하고, Lv.${targetLvl} ${getSwordName(targetLvl)}을(를) 구매했습니다! (-${price.toLocaleString()}G)`, "c-s");
+            } else {
+                addLog(`🗡️ 검 상점에서 Lv.${targetLvl} ${getSwordName(targetLvl)}을(를) 구매했습니다! (-${price.toLocaleString()}G)`, "c-s");
+            }
             triggerAutoSave();
         }
 
@@ -2488,6 +2724,10 @@
             const minSacEl = document.getElementById('sacrifice-min-level-display');
             if (minSacEl) {
                 minSacEl.innerText = Math.max(11, sacrificedLevel + 1);
+            }
+            const quizBtn = document.getElementById('btn-quiz-gold');
+            if (quizBtn) {
+                quizBtn.innerHTML = `📝 퀴즈로 돈벌기 (x${mult.toFixed(1)})`;
             }
             
             const btn = document.getElementById('btn-free-gold');
@@ -2682,15 +2922,12 @@
                 baseD = 0;
             }
 
-            if (activeBuff === 'great_success') {
-                baseG += 10;
-                if (baseS >= 5) baseS -= 5;
-                if (baseM >= 5) baseM -= 5;
-            } else if (activeBuff === 'success') {
+            if (activeBuffs.success) {
                 baseS += 10;
                 if (baseF >= 5) baseF -= 5;
                 if (baseD >= 5) baseD -= 5;
-            } else if (activeBuff === 'fail_reduce') {
+            }
+            if (activeBuffs.fail_reduce) {
                 if (baseF >= 10) { baseF -= 10; baseM += 10; }
                 else { baseM += baseF; baseF = 0; }
             }
@@ -2726,9 +2963,8 @@
             const offerFailTag = hasOffer ? ` <span style="color:#8e44ad; font-weight:bold;">(-${offerBonus.toFixed(1)}%)</span>` : '';
             probList.innerHTML = `
                 ${hasOffer ? `<li style="color:#8e44ad; font-weight:bold; font-size:1.15rem; margin-bottom:8px;">🔥 재물 선택됨: Lv.${inventory[offeredInvIdx]} 검</li>` : ''}
-                ${activeBuff === 'great_success' ? '<li style="color:#e74c3c; font-weight:bold; font-size:1.2rem; margin-bottom:10px;">🔥 5연속 정답 버프! (대성공 +10%)</li>' : ''}
-                ${activeBuff === 'success' ? '<li style="color:#e74c3c; font-weight:bold; font-size:1.2rem; margin-bottom:10px;">🔥 5연속 정답 버프! (성공 +10%)</li>' : ''}
-                ${activeBuff === 'fail_reduce' ? '<li style="color:#e74c3c; font-weight:bold; font-size:1.2rem; margin-bottom:10px;">🔥 5연속 정답 버프! (실패 -10%)</li>' : ''}
+                ${activeBuffs.fail_reduce ? '<li style="color:#2980b9; font-weight:bold; font-size:1.15rem; margin-bottom:8px;">🛡️ 10연속 정답 버프! (실패 -10%)</li>' : ''}
+                ${activeBuffs.success ? '<li style="color:#27ae60; font-weight:bold; font-size:1.15rem; margin-bottom:8px;">⭐ 15연속 정답 버프! (성공 +10%)</li>' : ''}
                 <li class="c-s">대성공 (+2): ${p.great.toFixed(1)}%</li>
                 <li class="c-s">성공 (+1): ${p.success.toFixed(1)}%${offerSuccessTag}</li>
                 <li class="c-m">유지 (0): ${p.maintain.toFixed(1)}%</li>
@@ -2756,7 +2992,17 @@
             }
         }
 
-        function triggerEnhance() {
+        function closeEnhanceConfirm() {
+            const modal = document.getElementById('enhance-confirm-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function confirmEnhance() {
+            closeEnhanceConfirm();
+            triggerEnhance(true);
+        }
+
+        function triggerEnhance(confirmed = false) {
             if (getLockedGate(currentLevel)) {
                 addLog("🔒 필수 문제를 풀어야 다음 강화 구간으로 넘어갈 수 있습니다!", "c-d");
                 updateTierLockUI();
@@ -2769,6 +3015,20 @@
                 const enhanceCost = getEnhanceCost(currentLevel);
                 if (gold < enhanceCost) {
                     addLog(`강화에 필요한 골드가 부족합니다! (${enhanceCost}G 필요)`, "c-d");
+                    return;
+                }
+                if (!confirmed && currentLevel >= 30) {
+                    const p = getProbabilities();
+                    const protectStatus = (activeItems.protect && currentLevel < 36)
+                        ? '<span style="color:#27ae60;">• 장비 파괴 보호권 적용 중 (파괴 방지)</span>'
+                        : (activeItems.downgrade && currentLevel >= 15
+                            ? '<span style="color:#e67e22;">• 파괴 완화권 적용 중 (파괴 시 -10단계)</span>'
+                            : '<span style="color:#c0392b;">• 파괴 방지 아이템 미적용!</span>');
+                    document.getElementById('enhance-confirm-message').innerHTML =
+                        `정말 <span style="color:#2980b9;">Lv.${currentLevel} ${getSwordName(currentLevel)}</span>을(를)<br>강화하시겠습니까?<br><br>` +
+                        `<span style="font-size:1.02rem; color:#2c3e50;">• 소모 골드: <strong>${enhanceCost}G</strong> / 파괴 확률: <strong style="color:#c0392b;">${p.destroy.toFixed(1)}%</strong></span><br>` +
+                        `<span style="font-size:1.02rem;">${protectStatus}</span>`;
+                    document.getElementById('enhance-confirm-modal').style.display = 'flex';
                     return;
                 }
                 gold -= enhanceCost;
@@ -2843,9 +3103,10 @@
                 addLog(`🔥 Lv.${usedLvl} 검을 재물로 바쳐 강화에 사용했습니다!`, "c-info");
                 updateInventoryUI();
             }
-            if (activeBuff) {
-                activeBuff = null;
-                addLog("🔥 퀴즈 버프가 소모되었습니다.", "c-m");
+            if (activeBuffs.success || activeBuffs.fail_reduce) {
+                activeBuffs.success = false;
+                activeBuffs.fail_reduce = false;
+                addLog("🔥 퀴즈 연속 정답 버프가 소모되었습니다.", "c-m");
             }
             
             updateItemUI();
@@ -2892,6 +3153,21 @@
             updateSwordShopUI();
             triggerAutoSave();
         }
+
+        /** --- CUSTOM SVG SWORDS (Lv.21 ~ Lv.30) --- */
+        const CUSTOM_SVG_SWORDS = {"21": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 320\" width=\"200\" height=\"320\"><defs>\n            <linearGradient id=\"suit-blade-l\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n              <stop offset=\"0%\" stop-color=\"#ffffff\"/>\n              <stop offset=\"55%\" stop-color=\"#cbd5e1\"/>\n              <stop offset=\"100%\" stop-color=\"#64748b\"/>\n            </linearGradient>\n            <linearGradient id=\"suit-blade-r\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n              <stop offset=\"0%\" stop-color=\"#94a3b8\"/>\n              <stop offset=\"65%\" stop-color=\"#334155\"/>\n              <stop offset=\"100%\" stop-color=\"#0f172a\"/>\n            </linearGradient>\n            <clipPath id=\"suit-blade-clip\">\n              <polygon points=\"100,16 66,96 62,196 100,224 138,196 134,96\"/>\n            </clipPath>\n          </defs>\n          <!-- 날카로운 각진 은빛 검신 -->\n          <polygon points=\"100,16 66,96 62,196 100,224\" fill=\"url(#suit-blade-l)\" stroke=\"#0f172a\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>\n          <polygon points=\"100,16 134,96 138,196 100,224\" fill=\"url(#suit-blade-r)\" stroke=\"#0f172a\" stroke-width=\"2.5\" stroke-linejoin=\"round\" class=\"sketch-fill-dark\"/>\n          <!-- 사선 칼날 절개선 -->\n          <polyline points=\"66,96 100,108 134,96\" fill=\"none\" stroke=\"#0f172a\" stroke-width=\"2.2\" class=\"sketch-no-fill\"/>\n          <!-- 은빛 광택 스윕 -->\n          <g clip-path=\"url(#suit-blade-clip)\" class=\"sketch-hide\">\n            <rect x=\"75\" y=\"10\" width=\"24\" height=\"220\" fill=\"#ffffff\" opacity=\"0.55\" class=\"anim-suit-sheen\"/>\n          </g>\n          <!-- 하단 블랙 턱시도 자켓 & V넥 화이트 셔츠 -->\n          <polygon points=\"62,186 100,236 138,186 134,242 100,264 66,242\" fill=\"#09090b\" stroke=\"#0f172a\" stroke-width=\"2.5\" stroke-linejoin=\"round\" class=\"sketch-fill-dark\"/>\n          <!-- 화이트 셔츠 V넥 -->\n          <polygon points=\"78,192 100,232 122,192\" fill=\"#f8fafc\" stroke=\"#0f172a\" stroke-width=\"1.8\"/>\n          <!-- 넥타이 (크림슨/다크 실크 포인트) -->\n          <polygon points=\"96,192 104,192 102,202 106,220 100,231 94,220 98,202\" fill=\"#be123c\" stroke=\"#0f172a\" stroke-width=\"1.5\"/>\n          <!-- 좌/우 턱시도 새틴 라펠 -->\n          <polygon points=\"62,186 78,192 100,234 66,214\" fill=\"#1e293b\" stroke=\"#94a3b8\" stroke-width=\"1.4\"/>\n          <polygon points=\"138,186 122,192 100,234 134,214\" fill=\"#1e293b\" stroke=\"#94a3b8\" stroke-width=\"1.4\"/>\n          <!-- 포켓치프 -->\n          <polygon points=\"116,226 128,220 126,230\" fill=\"#f8fafc\" class=\"sketch-hide\"/>\n          <!-- 슬림 수트 소매 손잡이 & 단추 디테일 -->\n          <polygon points=\"84,250 116,250 111,288 89,288\" fill=\"#0f172a\" stroke=\"#020617\" stroke-width=\"2.5\"/>\n          <circle cx=\"100\" cy=\"260\" r=\"2.6\" fill=\"#cbd5e1\" class=\"sketch-solid\"/>\n          <circle cx=\"100\" cy=\"272\" r=\"2.6\" fill=\"#cbd5e1\" class=\"sketch-solid\"/>\n          <!-- 커프스링크 고리 폼멜 -->\n          <circle cx=\"100\" cy=\"298\" r=\"8.5\" fill=\"none\" stroke=\"#e2e8f0\" stroke-width=\"4\" class=\"sketch-no-fill\"/></svg>", "22": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 320\" width=\"200\" height=\"320\"><defs>\n            <linearGradient id=\"kr-body\" x1=\"0\" y1=\"1\" x2=\"0\" y2=\"0\">\n              <stop offset=\"0%\" stop-color=\"#312e81\"/>\n              <stop offset=\"50%\" stop-color=\"#6b21a8\"/>\n              <stop offset=\"100%\" stop-color=\"#a855f7\"/>\n            </linearGradient>\n            <linearGradient id=\"kr-inner\" x1=\"0\" y1=\"1\" x2=\"0\" y2=\"0\">\n              <stop offset=\"0%\" stop-color=\"#1e1b4b\"/>\n              <stop offset=\"100%\" stop-color=\"#4c1d95\"/>\n            </linearGradient>\n          </defs>\n          <!-- 꿈틀거리는 크라켄 촉수 다발 -->\n          <g class=\"anim-kraken\">\n            <!-- 메인 촉수 외곽 -->\n            <path d=\"M100,218 C64,208 40,174 56,128 C44,146 28,146 32,120 C36,96 62,102 66,78 C70,52 56,42 74,26 C82,48 92,40 98,18 C110,44 124,48 122,74 C138,58 158,76 146,104 C164,92 176,116 156,144 C166,162 148,200 100,218 Z\" fill=\"url(#kr-body)\" stroke=\"#1e1b4b\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>\n            <!-- 중앙 굵은 촉수 음영 -->\n            <path d=\"M100,214 C80,194 74,158 84,122 C78,98 88,76 100,52 C112,78 122,102 114,132 C126,158 120,196 100,214 Z\" fill=\"url(#kr-inner)\" stroke=\"#3b0764\" stroke-width=\"1.8\" class=\"sketch-fill-dark\"/>\n            <!-- 빛나는 청록빛 빨판(Suction Cups) 디테일 -->\n            <g fill=\"#22d3ee\" stroke=\"#083344\" stroke-width=\"1.4\" class=\"anim-sucker\">\n              <circle cx=\"54\" cy=\"126\" r=\"4.2\"/>\n              <circle cx=\"64\" cy=\"144\" r=\"3.8\"/>\n              <circle cx=\"76\" cy=\"164\" r=\"3.5\"/>\n              <circle cx=\"80\" cy=\"88\" r=\"3.6\"/>\n              <circle cx=\"96\" cy=\"68\" r=\"3.4\"/>\n              <circle cx=\"116\" cy=\"96\" r=\"3.8\"/>\n              <circle cx=\"136\" cy=\"114\" r=\"4.2\"/>\n              <circle cx=\"144\" cy=\"134\" r=\"3.8\"/>\n              <circle cx=\"122\" cy=\"158\" r=\"3.6\"/>\n              <circle cx=\"100\" cy=\"176\" r=\"4\"/>\n            </g>\n          </g>\n          <!-- 튼튼한 선박 닻 스타일 칼라 & 손잡이 -->\n          <path d=\"M72,212 L128,212 L120,228 L80,228 Z\" fill=\"#475569\" stroke=\"#0f172a\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>\n          <path d=\"M84,228 L116,228 L110,282 L100,292 L90,282 Z\" fill=\"#334155\" stroke=\"#0f172a\" stroke-width=\"2.5\" stroke-linejoin=\"round\" class=\"sketch-fill-dark\"/>\n          <!-- 측면 고리 -->\n          <path d=\"M114,238 C134,238 134,268 112,268\" fill=\"none\" stroke=\"#22d3ee\" stroke-width=\"5.5\" stroke-linecap=\"round\" class=\"sketch-no-fill\"/>\n          <path d=\"M114,238 C134,238 134,268 112,268\" fill=\"none\" stroke=\"#0f172a\" stroke-width=\"2\" stroke-linecap=\"round\" class=\"sketch-no-fill\"/></svg>", "23": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 320\" width=\"200\" height=\"320\"><defs>\n            <linearGradient id=\"gdr-gold\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\">\n              <stop offset=\"0%\" stop-color=\"#fef08a\"/>\n              <stop offset=\"40%\" stop-color=\"#eab308\"/>\n              <stop offset=\"80%\" stop-color=\"#b45309\"/>\n              <stop offset=\"100%\" stop-color=\"#78350f\"/>\n            </linearGradient>\n            <clipPath id=\"gdr-clip\">\n              <polygon points=\"100,22 168,214 32,214\"/>\n            </clipPath>\n          </defs>\n          <!-- 거대한 원뿔 황금 드릴 -->\n          <polygon points=\"100,22 168,214 32,214\" fill=\"url(#gdr-gold)\" stroke=\"#18181b\" stroke-width=\"2.8\" stroke-linejoin=\"round\"/>\n          <!-- 고속 회전 나선 홈 -->\n          <g clip-path=\"url(#gdr-clip)\">\n            <g class=\"anim-drill\" stroke=\"#7f1d1d\" stroke-width=\"4.5\" fill=\"none\">\n              <line x1=\"16\" y1=\"10\" x2=\"184\" y2=\"-12\"/>\n              <line x1=\"16\" y1=\"38\" x2=\"184\" y2=\"16\"/>\n              <line x1=\"16\" y1=\"66\" x2=\"184\" y2=\"44\"/>\n              <line x1=\"16\" y1=\"94\" x2=\"184\" y2=\"72\"/>\n              <line x1=\"16\" y1=\"122\" x2=\"184\" y2=\"100\"/>\n              <line x1=\"16\" y1=\"150\" x2=\"184\" y2=\"128\"/>\n              <line x1=\"16\" y1=\"178\" x2=\"184\" y2=\"156\"/>\n              <line x1=\"16\" y1=\"206\" x2=\"184\" y2=\"184\"/>\n              <line x1=\"16\" y1=\"234\" x2=\"184\" y2=\"212\"/>\n            </g>\n            <!-- 에너지 광택 하이라이트 -->\n            <polygon points=\"100,22 115,214 88,214\" fill=\"#ffffff\" opacity=\"0.32\" class=\"anim-drill-glint sketch-hide\"/>\n          </g>\n          <polygon points=\"100,22 168,214 32,214\" fill=\"none\" stroke=\"#18181b\" stroke-width=\"2.8\" stroke-linejoin=\"round\" class=\"sketch-no-fill\"/>\n          <!-- 크림슨 & 건메탈 육각 베이스 가드 -->\n          <polygon points=\"32,214 168,214 148,252 52,252\" fill=\"#991b1b\" stroke=\"#09090b\" stroke-width=\"2.6\" stroke-linejoin=\"round\" class=\"sketch-fill-dark\"/>\n          <polygon points=\"52,252 148,252 126,276 74,276\" fill=\"#27272a\" stroke=\"#09090b\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>\n          <!-- 코어 리액터 -->\n          <polygon points=\"74,225 126,225 116,244 84,244\" fill=\"#fde047\" stroke=\"#09090b\" stroke-width=\"2\" class=\"anim-drill-glint\"/>\n          <rect x=\"88\" y=\"276\" width=\"24\" height=\"24\" rx=\"3\" fill=\"#dc2626\" stroke=\"#09090b\" stroke-width=\"2.5\"/></svg>", "24": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 320\" width=\"200\" height=\"320\"><defs>\n            <linearGradient id=\"pp-body\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n              <stop offset=\"0%\" stop-color=\"#a16207\"/>\n              <stop offset=\"50%\" stop-color=\"#78350f\"/>\n              <stop offset=\"100%\" stop-color=\"#451a03\"/>\n            </linearGradient>\n          </defs>\n          <!-- 피어오르는 초록빛 악취 연기선 -->\n          <g stroke=\"#84cc16\" stroke-width=\"3\" fill=\"none\" stroke-linecap=\"round\" class=\"anim-stink sketch-no-fill\">\n            <path d=\"M56,120 Q46,102 58,84 Q70,66 58,48\"/>\n            <path d=\"M144,128 Q156,110 144,92 Q132,74 146,56\"/>\n            <path d=\"M100,40 Q92,26 102,14\"/>\n          </g>\n          <!-- 스케치 실루엣 기반 울퉁불퉁 진흙빛 똥 단검 -->\n          <path d=\"M100,26 C112,42 132,60 136,80 C142,108 134,132 138,156 C134,178 128,194 126,204 L74,204 C72,194 66,178 62,156 C66,132 58,108 64,80 C68,60 88,42 100,26 Z\" fill=\"url(#pp-body)\" stroke=\"#291509\" stroke-width=\"2.6\" stroke-linejoin=\"round\"/>\n          <!-- 내부 겹겹이 질감 & 광택 -->\n          <path d=\"M100,48 C114,68 118,92 110,114 C122,134 118,162 100,188 C82,162 78,134 90,114 C82,92 86,68 100,48 Z\" fill=\"#5c280b\" stroke=\"#291509\" stroke-width=\"1.8\" class=\"sketch-fill-dark\"/>\n          <path d=\"M84,78 Q92,66 102,68\" fill=\"none\" stroke=\"#d97706\" stroke-width=\"3\" stroke-linecap=\"round\" opacity=\"0.7\" class=\"sketch-no-fill\"/>\n          <path d=\"M80,136 Q92,126 104,132\" fill=\"none\" stroke=\"#d97706\" stroke-width=\"2.5\" stroke-linecap=\"round\" opacity=\"0.65\" class=\"sketch-no-fill\"/>\n          <!-- 녹아내리는 듯한 크로스가드 -->\n          <path d=\"M46,204 C68,208 82,194 100,194 C118,194 132,208 154,204 C142,224 124,228 100,224 C76,228 58,224 46,204 Z\" fill=\"#65a30d\" stroke=\"#1a2e05\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>\n          <!-- 손잡이 & 폼멜 -->\n          <path d=\"M88,224 L112,224 L108,274 L92,274 Z\" fill=\"#713f12\" stroke=\"#291509\" stroke-width=\"2.5\"/>\n          <polygon points=\"100,272 114,288 100,304 86,288\" fill=\"#84cc16\" stroke=\"#1a2e05\" stroke-width=\"2.5\"/>\n          <!-- 윙윙 날아다니는 파리 2마리 -->\n          <g class=\"anim-fly-1\">\n            <ellipse cx=\"44\" cy=\"70\" rx=\"4.5\" ry=\"2.5\" fill=\"#e2e8f0\" opacity=\"0.85\" transform=\"rotate(-30 44 70)\"/>\n            <ellipse cx=\"50\" cy=\"70\" rx=\"4.5\" ry=\"2.5\" fill=\"#e2e8f0\" opacity=\"0.85\" transform=\"rotate(30 50 70)\"/>\n            <circle cx=\"47\" cy=\"73\" r=\"3.4\" fill=\"#0f172a\" class=\"sketch-solid\"/>\n          </g>\n          <g class=\"anim-fly-2\">\n            <ellipse cx=\"152\" cy=\"144\" rx=\"4.5\" ry=\"2.5\" fill=\"#e2e8f0\" opacity=\"0.85\" transform=\"rotate(-25 152 144)\"/>\n            <ellipse cx=\"158\" cy=\"144\" rx=\"4.5\" ry=\"2.5\" fill=\"#e2e8f0\" opacity=\"0.85\" transform=\"rotate(25 158 144)\"/>\n            <circle cx=\"155\" cy=\"147\" r=\"3.2\" fill=\"#0f172a\" class=\"sketch-solid\"/>\n          </g></svg>", "25": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 320\" width=\"200\" height=\"320\"><defs>\n            <linearGradient id=\"et-edge\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\">\n              <stop offset=\"0%\" stop-color=\"#e0e7ff\"/>\n              <stop offset=\"50%\" stop-color=\"#94a3b8\"/>\n              <stop offset=\"100%\" stop-color=\"#64748b\"/>\n            </linearGradient>\n            <linearGradient id=\"et-core\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">\n              <stop offset=\"0%\" stop-color=\"#1e1b4b\"/>\n              <stop offset=\"55%\" stop-color=\"#0f172a\"/>\n              <stop offset=\"100%\" stop-color=\"#312e81\"/>\n            </linearGradient>\n          </defs>\n          <!-- 넓은 대검 외곽 검신 -->\n          <polygon points=\"100,18 136,70 129,214 71,214 64,70\" fill=\"url(#et-edge)\" stroke=\"#0f172a\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>\n          <!-- 미드나잇 블루 내부 검신 -->\n          <polygon points=\"100,38 121,76 117,208 83,208 79,76\" fill=\"url(#et-core)\" stroke=\"#0f172a\" stroke-width=\"2\" class=\"sketch-fill-dark\"/>\n          <!-- 빛나는 영원의 룬 문자 -->\n          <g stroke=\"#38bdf8\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\" class=\"anim-rune sketch-no-fill\">\n            <path d=\"M94,76 L106,76 M100,70 L100,96 L108,88\"/>\n            <path d=\"M93,112 L107,112 L95,128 L107,128\"/>\n            <path d=\"M100,144 L100,168 M92,152 L108,160\"/>\n            <path d=\"M94,182 L100,196 L106,182\"/>\n          </g>\n          <!-- 떠다니는 스타더스트 -->\n          <g fill=\"#e0f2fe\" class=\"sketch-hide\">\n            <circle cx=\"56\" cy=\"94\" r=\"2.6\" class=\"anim-stardust\"/>\n            <circle cx=\"144\" cy=\"118\" r=\"3\" class=\"anim-stardust\" style=\"animation-delay:0.6s\"/>\n            <circle cx=\"58\" cy=\"158\" r=\"2.2\" class=\"anim-stardust\" style=\"animation-delay:1.2s\"/>\n            <circle cx=\"142\" cy=\"64\" r=\"2.4\" class=\"anim-stardust\" style=\"animation-delay:0.3s\"/>\n          </g>\n          <!-- 각진 성좌 크로스가드 -->\n          <polygon points=\"48,210 74,204 126,204 152,210 144,228 118,224 82,224 56,228\" fill=\"#312e81\" stroke=\"#0f172a\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>\n          <polygon points=\"100,204 109,215 100,226 91,215\" fill=\"#c084fc\" stroke=\"#0f172a\" stroke-width=\"1.8\" class=\"anim-rune\"/>\n          <!-- 손잡이 & 폼멜 -->\n          <rect x=\"89\" y=\"224\" width=\"22\" height=\"58\" rx=\"3\" fill=\"#1e293b\" stroke=\"#0f172a\" stroke-width=\"2.5\"/>\n          <line x1=\"89\" y1=\"238\" x2=\"111\" y2=\"244\" stroke=\"#818cf8\" stroke-width=\"2\" class=\"sketch-no-fill\"/>\n          <line x1=\"89\" y1=\"252\" x2=\"111\" y2=\"258\" stroke=\"#818cf8\" stroke-width=\"2\" class=\"sketch-no-fill\"/>\n          <line x1=\"89\" y1=\"266\" x2=\"111\" y2=\"272\" stroke=\"#818cf8\" stroke-width=\"2\" class=\"sketch-no-fill\"/>\n          <polygon points=\"84,282 116,282 110,298 90,298\" fill=\"#4f46e5\" stroke=\"#0f172a\" stroke-width=\"2.5\"/></svg>", "26": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 320\" width=\"200\" height=\"320\"><defs>\n            <linearGradient id=\"fa-skin\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\">\n              <stop offset=\"0%\" stop-color=\"#fed7aa\"/>\n              <stop offset=\"45%\" stop-color=\"#f59e72\"/>\n              <stop offset=\"100%\" stop-color=\"#c26a4a\"/>\n            </linearGradient>\n          </defs>\n          <!-- 펌핑하는 전완근 & 주먹 그룹 -->\n          <g class=\"anim-flex\">\n            <!-- 꽉 쥔 주먹 (상단) -->\n            <path d=\"M74,54 C72,38 84,30 96,32 C104,26 118,28 124,38 C134,40 138,52 134,64 C132,74 126,80 124,88 L78,88 C74,78 72,68 74,54 Z\" fill=\"url(#fa-skin)\" stroke=\"#431407\" stroke-width=\"2.6\" stroke-linejoin=\"round\"/>\n            <!-- 손가락 마디 라인 -->\n            <path d=\"M88,34 L86,58 M102,32 L100,60 M116,36 L114,62\" fill=\"none\" stroke=\"#7c2d12\" stroke-width=\"2.2\" stroke-linecap=\"round\" class=\"sketch-no-fill\"/>\n            <!-- 엄지손가락 감싸기 -->\n            <path d=\"M76,66 C86,56 106,58 114,70 C106,78 88,80 76,74 Z\" fill=\"#f59e72\" stroke=\"#431407\" stroke-width=\"2.3\" stroke-linejoin=\"round\"/>\n            <!-- 우람한 전완근 몸통 -->\n            <path d=\"M78,86 C64,114 58,154 68,204 L134,204 C146,156 140,112 124,86 Z\" fill=\"url(#fa-skin)\" stroke=\"#431407\" stroke-width=\"2.6\" stroke-linejoin=\"round\"/>\n            <!-- 근육 갈라짐 음영 -->\n            <path d=\"M104,96 C118,122 122,160 112,196\" fill=\"none\" stroke=\"#9a3412\" stroke-width=\"3\" stroke-linecap=\"round\" class=\"sketch-no-fill\"/>\n            <path d=\"M86,108 C78,136 80,168 88,194\" fill=\"none\" stroke=\"#9a3412\" stroke-width=\"2.4\" stroke-linecap=\"round\" class=\"sketch-no-fill\"/>\n            <!-- 솟아오른 혈관(핏줄) 맥동 -->\n            <g stroke=\"#dc2626\" stroke-width=\"2.2\" fill=\"none\" stroke-linecap=\"round\" class=\"anim-vein sketch-no-fill\">\n              <path d=\"M96,104 L92,126 L102,146 L94,174\"/>\n              <path d=\"M92,126 L80,138\"/>\n              <path d=\"M102,146 L118,158\"/>\n            </g>\n          </g>\n          <!-- 스터드 가죽 리스트밴드 가드 -->\n          <path d=\"M52,212 C52,198 72,198 100,198 C128,198 148,198 148,212 C148,228 128,232 100,232 C72,232 52,228 52,212 Z\" fill=\"#1f2937\" stroke=\"#09090b\" stroke-width=\"2.6\" class=\"sketch-fill-dark\"/>\n          <!-- 금속 스터드 장식 -->\n          <circle cx=\"68\" cy=\"214\" r=\"4\" fill=\"#e2e8f0\" stroke=\"#09090b\" stroke-width=\"1.6\"/>\n          <circle cx=\"88\" cy=\"216\" r=\"4\" fill=\"#e2e8f0\" stroke=\"#09090b\" stroke-width=\"1.6\"/>\n          <circle cx=\"112\" cy=\"216\" r=\"4\" fill=\"#e2e8f0\" stroke=\"#09090b\" stroke-width=\"1.6\"/>\n          <circle cx=\"132\" cy=\"214\" r=\"4\" fill=\"#e2e8f0\" stroke=\"#09090b\" stroke-width=\"1.6\"/>\n          <!-- 테이핑 감긴 묵직한 손잡이 -->\n          <polygon points=\"82,232 118,232 112,292 88,292\" fill=\"#7f1d1d\" stroke=\"#09090b\" stroke-width=\"2.6\" stroke-linejoin=\"round\"/>\n          <line x1=\"85\" y1=\"248\" x2=\"115\" y2=\"254\" stroke=\"#f8fafc\" stroke-width=\"2.4\" class=\"sketch-no-fill\"/>\n          <line x1=\"86\" y1=\"266\" x2=\"114\" y2=\"272\" stroke=\"#f8fafc\" stroke-width=\"2.4\" class=\"sketch-no-fill\"/></svg>", "27": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 320\" width=\"200\" height=\"320\"><defs>\n            <linearGradient id=\"uni-horn\" x1=\"0\" y1=\"1\" x2=\"0\" y2=\"0\">\n              <stop offset=\"0%\" stop-color=\"#f59e0b\"/>\n              <stop offset=\"100%\" stop-color=\"#fef08a\"/>\n            </linearGradient>\n            <linearGradient id=\"uni-mane\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">\n              <stop offset=\"0%\" stop-color=\"#f472b6\"/>\n              <stop offset=\"33%\" stop-color=\"#fde047\"/>\n              <stop offset=\"66%\" stop-color=\"#67e8f9\"/>\n              <stop offset=\"100%\" stop-color=\"#c084fc\"/>\n            </linearGradient>\n          </defs>\n          <!-- 황금 나선 유니콘 뿔 -->\n          <polygon points=\"84,48 64,14 96,42\" fill=\"url(#uni-horn)\" stroke=\"#78350f\" stroke-width=\"2.2\" stroke-linejoin=\"round\"/>\n          <line x1=\"74\" y1=\"30\" x2=\"88\" y2=\"38\" stroke=\"#b45309\" stroke-width=\"1.8\" class=\"sketch-no-fill\"/>\n          <line x1=\"79\" y1=\"38\" x2=\"92\" y2=\"44\" stroke=\"#b45309\" stroke-width=\"1.8\" class=\"sketch-no-fill\"/>\n          <!-- 뿔 끝 반짝임 별 -->\n          <path d=\"M64,10 L66,16 L72,18 L66,20 L64,26 L62,20 L56,18 L62,16 Z\" fill=\"#fef08a\" class=\"anim-horn-sparkle sketch-hide\"/>\n          <!-- 파스텔 무지개 갈기 -->\n          <path d=\"M112,42 C132,42 138,56 128,66 C138,76 138,94 126,104 C134,118 132,134 122,144 L118,46 Z\" fill=\"url(#uni-mane)\" stroke=\"#334155\" stroke-width=\"2.2\" stroke-linejoin=\"round\"/>\n          <!-- 순백의 유니콘 머리 & 직선 목(검신) -->\n          <path d=\"M84,232 L84,88 C72,88 60,84 58,76 C56,66 68,60 82,56 C84,42 102,38 116,44 C122,48 124,58 122,68 L122,232 Z\" fill=\"#ffffff\" stroke=\"#334155\" stroke-width=\"2.6\" stroke-linejoin=\"round\"/>\n          <!-- 귀 -->\n          <path d=\"M98,42 L106,24 L114,44 Z\" fill=\"#ffffff\" stroke=\"#334155\" stroke-width=\"2.3\" stroke-linejoin=\"round\"/>\n          <path d=\"M102,40 L106,30 L110,41 Z\" fill=\"#fda4af\" class=\"sketch-hide\"/>\n          <!-- 귀여운 얼굴 -->\n          <circle cx=\"86\" cy=\"68\" r=\"3.5\" fill=\"#1e293b\" class=\"anim-blink sketch-solid\"/>\n          <ellipse cx=\"94\" cy=\"75\" rx=\"4.5\" ry=\"2.6\" fill=\"#f9a8d4\" opacity=\"0.85\" class=\"sketch-hide\"/>\n          <path d=\"M61,76 Q68,81 74,75\" fill=\"none\" stroke=\"#334155\" stroke-width=\"2\" stroke-linecap=\"round\" class=\"sketch-no-fill\"/>\n          <!-- 심플 일자 크로스가드 -->\n          <path d=\"M46,232 L154,232 L148,243 L52,243 Z\" fill=\"#f9a8d4\" stroke=\"#334155\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>\n          <!-- 둥근 U자 손잡이 -->\n          <path d=\"M88,243 L112,243 L112,282 C112,294 88,294 88,282 Z\" fill=\"#bae6fd\" stroke=\"#334155\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/></svg>", "28": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 320\" width=\"200\" height=\"320\"><defs>\n            <linearGradient id=\"ch-gold\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n              <stop offset=\"0%\" stop-color=\"#fde68a\"/>\n              <stop offset=\"50%\" stop-color=\"#d97706\"/>\n              <stop offset=\"100%\" stop-color=\"#78350f\"/>\n            </linearGradient>\n            <linearGradient id=\"ch-dark\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\">\n              <stop offset=\"0%\" stop-color=\"#334155\"/>\n              <stop offset=\"50%\" stop-color=\"#0f172a\"/>\n              <stop offset=\"100%\" stop-color=\"#1e293b\"/>\n            </linearGradient>\n          </defs>\n          <!-- 부러져 공중 부양 중인 상단 검끝 -->\n          <g class=\"anim-levitate\">\n            <polygon points=\"100,14 134,82 114,90 100,82 86,90 66,82\" fill=\"url(#ch-dark)\" stroke=\"#0f172a\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>\n            <polygon points=\"100,14 108,84 100,82 92,84\" fill=\"url(#ch-gold)\" class=\"sketch-no-fill\"/>\n            <!-- 부러진 단면 에너지 글로우 -->\n            <polyline points=\"68,82 86,90 100,82 114,90 132,82\" fill=\"none\" stroke=\"#38bdf8\" stroke-width=\"2.6\" class=\"sketch-no-fill\"/>\n          </g>\n          <!-- 부러진 틈을 연결하는 시공간 번개 아크 -->\n          <g stroke=\"#22d3ee\" stroke-width=\"2.2\" fill=\"none\" stroke-linecap=\"round\" class=\"anim-spacetime sketch-no-fill\">\n            <path d=\"M84,90 L78,100 L86,106\"/>\n            <path d=\"M116,90 L122,100 L114,106\"/>\n            <path d=\"M100,84 L96,94 L104,98 L100,104\"/>\n          </g>\n          <!-- 하단 흑철 & 다크골드 대검신 -->\n          <polygon points=\"74,154 126,154 134,174 118,244 82,244 66,174\" fill=\"url(#ch-dark)\" stroke=\"#0f172a\" stroke-width=\"2.5\" stroke-linejoin=\"round\" class=\"sketch-fill-dark\"/>\n          <line x1=\"100\" y1=\"158\" x2=\"100\" y2=\"240\" stroke=\"#f59e0b\" stroke-width=\"2.8\" class=\"sketch-no-fill\"/>\n          <!-- 중앙 시공간 시계 링 (십자선 + 회전 시계바늘) -->\n          <circle cx=\"100\" cy=\"128\" r=\"28\" fill=\"#090d16\" stroke=\"url(#ch-gold)\" stroke-width=\"5.5\"/>\n          <circle cx=\"100\" cy=\"128\" r=\"22\" fill=\"none\" stroke=\"#38bdf8\" stroke-width=\"1.5\" opacity=\"0.7\" class=\"sketch-no-fill\"/>\n          <!-- 스케치 속 십자선(크로스헤어) -->\n          <line x1=\"100\" y1=\"103\" x2=\"100\" y2=\"153\" stroke=\"#d97706\" stroke-width=\"2.2\" class=\"sketch-no-fill\"/>\n          <line x1=\"75\" y1=\"128\" x2=\"125\" y2=\"128\" stroke=\"#d97706\" stroke-width=\"2.2\" class=\"sketch-no-fill\"/>\n          <!-- 회전하는 시계 시침/분침 -->\n          <line x1=\"100\" y1=\"128\" x2=\"100\" y2=\"112\" stroke=\"#38bdf8\" stroke-width=\"2.8\" stroke-linecap=\"round\" class=\"anim-clock-min sketch-no-fill\"/>\n          <line x1=\"100\" y1=\"128\" x2=\"112\" y2=\"128\" stroke=\"#fde047\" stroke-width=\"3.2\" stroke-linecap=\"round\" class=\"anim-clock-hour sketch-no-fill\"/>\n          <circle cx=\"100\" cy=\"128\" r=\"3.5\" fill=\"#ffffff\" stroke=\"#0f172a\" stroke-width=\"1.2\"/>\n          <!-- 화려한 다크골드 이중 크로스가드 -->\n          <path d=\"M42,242 C52,226 68,236 80,242 L120,242 C132,236 148,226 158,242 C146,258 130,254 118,262 L82,262 C70,254 54,258 42,242 Z\" fill=\"url(#ch-gold)\" stroke=\"#0f172a\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>\n          <!-- 손잡이 & 시공간 보석 -->\n          <polygon points=\"84,262 116,262 108,298 100,308 92,298\" fill=\"#1e293b\" stroke=\"#0f172a\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>\n          <circle cx=\"100\" cy=\"252\" r=\"5\" fill=\"#38bdf8\" class=\"anim-rune\"/></svg>", "29": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 320\" width=\"200\" height=\"320\"><defs>\n            <linearGradient id=\"ai-blade\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n              <stop offset=\"0%\" stop-color=\"#f8fafc\"/>\n              <stop offset=\"55%\" stop-color=\"#94a3b8\"/>\n              <stop offset=\"100%\" stop-color=\"#334155\"/>\n            </linearGradient>\n            <clipPath id=\"ai-lens-clip\">\n              <rect x=\"44\" y=\"136\" width=\"46\" height=\"28\" rx=\"5\"/>\n              <rect x=\"108\" y=\"136\" width=\"46\" height=\"28\" rx=\"5\"/>\n            </clipPath>\n          </defs>\n          <!-- 날렵한 곡도 카타나 검신 -->\n          <path d=\"M134,18 C92,56 72,124 76,226 L124,226 C116,144 118,74 134,18 Z\" fill=\"url(#ai-blade)\" stroke=\"#0f172a\" stroke-width=\"2.6\" stroke-linejoin=\"round\"/>\n          <path d=\"M126,34 C98,74 86,136 88,220\" fill=\"none\" stroke=\"#38bdf8\" stroke-width=\"2\" opacity=\"0.85\" class=\"sketch-no-fill\"/>\n          <!-- 곡선 크로스가드 & 손잡이 -->\n          <path d=\"M46,234 C66,222 84,224 100,224 C116,224 134,222 154,234 C146,246 124,242 100,242 C76,242 54,246 46,234 Z\" fill=\"#1e293b\" stroke=\"#0f172a\" stroke-width=\"2.6\" stroke-linejoin=\"round\"/>\n          <rect x=\"89\" y=\"242\" width=\"22\" height=\"50\" rx=\"4\" fill=\"#0f172a\" stroke=\"#020617\" stroke-width=\"2.6\"/>\n          <circle cx=\"100\" cy=\"296\" r=\"8\" fill=\"#06b6d4\" stroke=\"#0f172a\" stroke-width=\"2.5\"/>\n          <!-- 스마트 AI 안경 (기울어진 스타일) -->\n          <g transform=\"rotate(-14 100 150)\">\n            <line x1=\"36\" y1=\"148\" x2=\"44\" y2=\"148\" stroke=\"#0f172a\" stroke-width=\"4.2\" stroke-linecap=\"round\"/>\n            <line x1=\"154\" y1=\"148\" x2=\"162\" y2=\"148\" stroke=\"#0f172a\" stroke-width=\"4.2\" stroke-linecap=\"round\"/>\n            <path d=\"M90,148 Q99,142 108,148\" fill=\"none\" stroke=\"#0f172a\" stroke-width=\"4\" class=\"sketch-no-fill\"/>\n            <!-- 다크 스마트 렌즈 -->\n            <rect x=\"44\" y=\"136\" width=\"46\" height=\"28\" rx=\"5\" fill=\"#083344\" fill-opacity=\"0.85\" stroke=\"#0f172a\" stroke-width=\"4\"/>\n            <rect x=\"108\" y=\"136\" width=\"46\" height=\"28\" rx=\"5\" fill=\"#083344\" fill-opacity=\"0.85\" stroke=\"#0f172a\" stroke-width=\"4\"/>\n            <!-- HUD 스캔라인 & 타겟 레티클 -->\n            <g clip-path=\"url(#ai-lens-clip)\" class=\"sketch-hide\">\n              <!-- 좌측 렌즈 HUD 스캔라인 -->\n              <line x1=\"46\" y1=\"150\" x2=\"88\" y2=\"150\" stroke=\"#22d3ee\" stroke-width=\"2\" class=\"anim-hud-scan\"/>\n              <line x1=\"50\" y1=\"143\" x2=\"66\" y2=\"143\" stroke=\"#38bdf8\" stroke-width=\"1.3\" opacity=\"0.8\"/>\n              <line x1=\"50\" y1=\"157\" x2=\"76\" y2=\"157\" stroke=\"#38bdf8\" stroke-width=\"1.3\" opacity=\"0.8\"/>\n              <!-- 우측 렌즈 타겟 레티클 -->\n              <circle cx=\"131\" cy=\"150\" r=\"7.5\" fill=\"none\" stroke=\"#22d3ee\" stroke-width=\"1.5\"/>\n              <line x1=\"131\" y1=\"139\" x2=\"131\" y2=\"161\" stroke=\"#22d3ee\" stroke-width=\"1.2\"/>\n              <line x1=\"120\" y1=\"150\" x2=\"142\" y2=\"150\" stroke=\"#22d3ee\" stroke-width=\"1.2\"/>\n              <!-- 렌즈 반짝임 광택 -->\n              <g class=\"anim-glint\">\n                <polygon points=\"54,130 68,130 52,172 38,172\" fill=\"#ffffff\" opacity=\"0.8\"/>\n                <polygon points=\"118,130 132,130 116,172 102,172\" fill=\"#ffffff\" opacity=\"0.8\"/>\n              </g>\n            </g>\n          </g></svg>", "30": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 320\" width=\"200\" height=\"320\"><defs>\n            <linearGradient id=\"bn-fruit\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n              <stop offset=\"0%\" stop-color=\"#fefce8\"/>\n              <stop offset=\"100%\" stop-color=\"#fef08a\"/>\n            </linearGradient>\n            <linearGradient id=\"bn-peel\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">\n              <stop offset=\"0%\" stop-color=\"#fde047\"/>\n              <stop offset=\"100%\" stop-color=\"#eab308\"/>\n            </linearGradient>\n          </defs>\n          <g class=\"anim-banana\">\n            <!-- 뒤쪽 벗겨진 껍질 (1, 2) -->\n            <path d=\"M84,186 C64,158 44,162 36,192 C58,196 72,208 86,220 Z\" fill=\"#ca8a04\" stroke=\"#422006\" stroke-width=\"2.4\" stroke-linejoin=\"round\" class=\"sketch-fill-dark\"/>\n            <path d=\"M118,186 C138,158 158,162 164,192 C142,196 128,208 114,220 Z\" fill=\"#ca8a04\" stroke=\"#422006\" stroke-width=\"2.4\" stroke-linejoin=\"round\" class=\"sketch-fill-dark\"/>\n            <!-- 바나나 과육 (검신) -->\n            <path d=\"M76,198 C64,142 66,76 88,42 C102,24 122,32 126,56 C132,96 128,152 124,198 Z\" fill=\"url(#bn-fruit)\" stroke=\"#422006\" stroke-width=\"2.6\" stroke-linejoin=\"round\"/>\n            <!-- 해맑은 스마일 얼굴 (• ‿ •) -->\n            <g class=\"anim-blink\">\n              <circle cx=\"91\" cy=\"108\" r=\"3.4\" fill=\"#422006\" class=\"sketch-solid\"/>\n              <circle cx=\"111\" cy=\"108\" r=\"3.4\" fill=\"#422006\" class=\"sketch-solid\"/>\n            </g>\n            <path d=\"M96,115 Q101,123 106,115\" fill=\"none\" stroke=\"#422006\" stroke-width=\"2.4\" stroke-linecap=\"round\" class=\"sketch-no-fill\"/>\n            <ellipse cx=\"84\" cy=\"115\" rx=\"4.2\" ry=\"2.5\" fill=\"#fb7185\" opacity=\"0.7\" class=\"sketch-hide\"/>\n            <ellipse cx=\"118\" cy=\"115\" rx=\"4.2\" ry=\"2.5\" fill=\"#fb7185\" opacity=\"0.7\" class=\"sketch-hide\"/>\n            <!-- 반짝임 포인트 -->\n            <path d=\"M142,68 L144,74 L150,76 L144,78 L142,84 L140,78 L134,76 L140,74 Z\" fill=\"#fef08a\" class=\"anim-horn-sparkle sketch-hide\"/>\n            <!-- 앞쪽 좌/우 활짝 벗겨진 껍질 (3, 4) -->\n            <path d=\"M80,192 C52,198 32,218 26,246 C56,238 78,236 92,244 Z\" fill=\"url(#bn-peel)\" stroke=\"#422006\" stroke-width=\"2.6\" stroke-linejoin=\"round\"/>\n            <path d=\"M122,192 C150,196 170,216 176,244 C146,238 124,236 110,244 Z\" fill=\"url(#bn-peel)\" stroke=\"#422006\" stroke-width=\"2.6\" stroke-linejoin=\"round\"/>\n            <!-- 중앙 껍질 손잡이 & 꼭지 -->\n            <path d=\"M84,196 C94,202 108,202 120,196 L116,274 C114,288 88,288 86,274 Z\" fill=\"url(#bn-peel)\" stroke=\"#422006\" stroke-width=\"2.6\" stroke-linejoin=\"round\"/>\n            <rect x=\"94\" y=\"280\" width=\"14\" height=\"16\" rx=\"3\" fill=\"#713f12\" stroke=\"#422006\" stroke-width=\"2.4\"/>\n          </g></svg>"};
+        const CUSTOM_SVG_IMAGES = {};
+
+        (function preloadCustomSvgSwords() {
+            Object.keys(CUSTOM_SVG_SWORDS).forEach(lvl => {
+                const img = new Image();
+                img.onload = () => {
+                    if (typeof updateInventoryUI === 'function') updateInventoryUI();
+                };
+                img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(CUSTOM_SVG_SWORDS[lvl]);
+                CUSTOM_SVG_IMAGES[lvl] = img;
+            });
+        })();
 
         /** --- RENDERING --- */
         function drawSwordOnContext(ctx, level, cx, cy, scale = 1, isAnim = false) {
@@ -3026,7 +3302,24 @@
                 () => { drawHandle(); ctx.beginPath(); ctx.moveTo(0, -30); for(let i=0; i<60; i++){ ctx.lineTo(j() + (Math.random()-0.5)*80, j() - 30 - Math.random()*150); } ctx.closePath(); ctx.fillStyle = p[1]; ctx.fill(); ctx.stroke(); }
             ];
 
-            if (level < designs.length) designs[level]();
+            if (CUSTOM_SVG_IMAGES[level]) {
+                const img = CUSTOM_SVG_IMAGES[level];
+                const drawH = isAnim ? 275 : 182;
+                const drawW = drawH * (200 / 320);
+                const floatY = isAnim ? Math.sin(Date.now() / 450) * 5 : 0;
+                if (img.complete && img.naturalWidth > 0) {
+                    ctx.drawImage(img, -drawW / 2, -drawH + 6 + floatY, drawW, drawH);
+                } else {
+                    img.addEventListener('load', () => {
+                        ctx.save();
+                        ctx.translate(cx, cy);
+                        ctx.scale(scale, scale);
+                        ctx.translate(0, 30);
+                        ctx.drawImage(img, -drawW / 2, -drawH + 6, drawW, drawH);
+                        ctx.restore();
+                    }, { once: true });
+                }
+            } else if (level < designs.length) designs[level]();
             else {
                 drawHandle(50 + (level - 35));
                 ctx.beginPath(); ctx.moveTo(0,-30);
@@ -3116,6 +3409,16 @@
             if (activeItems.fail) activeLabels.push({ text: '실패 감소 물약', bg: '#ebf5fb', border: '#2980b9', color: '#1f618d' });
             if (activeItems.protect) activeLabels.push({ text: '장비 파괴 보호권', bg: '#f5eef8', border: '#8e44ad', color: '#6c3483' });
             if (activeItems.downgrade) activeLabels.push({ text: '파괴 완화권', bg: '#fef5e7', border: '#e67e22', color: '#b9770e' });
+            if (!isFever && offeredInvIdx !== null && inventory[offeredInvIdx] !== null) {
+                const lvl = inventory[offeredInvIdx];
+                const bonus = (lvl / 4).toFixed(1);
+                activeLabels.push({
+                    text: `🔥 검 희생 적용 (Lv.${lvl}, +${bonus}%)`,
+                    bg: '#fdedec',
+                    border: '#c0392b',
+                    color: '#922b21'
+                });
+            }
 
             if (activeLabels.length === 0) return;
 
@@ -3127,47 +3430,406 @@
             const padX = 10;
             const badgeH = 26;
             const gap = 8;
+            const rowGap = 6;
+            const maxRowW = canvas.width - 24;
+
             const measured = activeLabels.map(item => ({
                 ...item,
                 w: ctx.measureText(item.text).width + padX * 2
             }));
 
-            const totalW = measured.reduce((sum, m) => sum + m.w, 0) + gap * (measured.length - 1);
-            let curX = (canvas.width - totalW) / 2;
-            const y = canvas.height - 26;
-
+            // 캔버스 너비를 넘지 않도록 자동 줄바꿈
+            const rows = [];
+            let curRow = [];
+            let curRowW = 0;
             measured.forEach(m => {
-                const bx = curX;
-                const by = y - badgeH / 2;
-                const r = 12;
+                const nextW = curRow.length === 0 ? m.w : curRowW + gap + m.w;
+                if (curRow.length > 0 && nextW > maxRowW) {
+                    rows.push({ items: curRow, totalW: curRowW });
+                    curRow = [m];
+                    curRowW = m.w;
+                } else {
+                    curRow.push(m);
+                    curRowW = nextW;
+                }
+            });
+            if (curRow.length > 0) rows.push({ items: curRow, totalW: curRowW });
 
-                ctx.beginPath();
-                ctx.moveTo(bx + r, by);
-                ctx.lineTo(bx + m.w - r, by);
-                ctx.quadraticCurveTo(bx + m.w, by, bx + m.w, by + r);
-                ctx.lineTo(bx + m.w, by + badgeH - r);
-                ctx.quadraticCurveTo(bx + m.w, by + badgeH, bx + m.w - r, by + badgeH);
-                ctx.lineTo(bx + r, by + badgeH);
-                ctx.quadraticCurveTo(bx, by + badgeH, bx, by + badgeH - r);
-                ctx.lineTo(bx, by + r);
-                ctx.quadraticCurveTo(bx, by, bx + r, by);
-                ctx.closePath();
+            const bottomY = canvas.height - 22;
+            rows.forEach((row, rIdx) => {
+                const rowFromBottom = (rows.length - 1) - rIdx;
+                const y = bottomY - rowFromBottom * (badgeH + rowGap);
+                let curX = (canvas.width - row.totalW) / 2;
 
-                ctx.fillStyle = m.bg;
-                ctx.fill();
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = m.border;
-                ctx.stroke();
+                row.items.forEach(m => {
+                    const bx = curX;
+                    const by = y - badgeH / 2;
+                    const r = 12;
 
-                ctx.fillStyle = m.color;
-                ctx.fillText(m.text, bx + m.w / 2, y + 0.5);
-                curX += m.w + gap;
+                    ctx.beginPath();
+                    ctx.moveTo(bx + r, by);
+                    ctx.lineTo(bx + m.w - r, by);
+                    ctx.quadraticCurveTo(bx + m.w, by, bx + m.w, by + r);
+                    ctx.lineTo(bx + m.w, by + badgeH - r);
+                    ctx.quadraticCurveTo(bx + m.w, by + badgeH, bx + m.w - r, by + badgeH);
+                    ctx.lineTo(bx + r, by + badgeH);
+                    ctx.quadraticCurveTo(bx, by + badgeH, bx, by + badgeH - r);
+                    ctx.lineTo(bx, by + r);
+                    ctx.quadraticCurveTo(bx, by, bx + r, by);
+                    ctx.closePath();
+
+                    ctx.fillStyle = m.bg;
+                    ctx.fill();
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = m.border;
+                    ctx.stroke();
+
+                    ctx.fillStyle = m.color;
+                    ctx.fillText(m.text, bx + m.w / 2, y + 0.5);
+                    curX += m.w + gap;
+                });
             });
 
             ctx.restore();
         }
 
-        function gameLoop(timestamp) {
+        /** --- SWORD SWING INTERACTION (CANVAS CLICK) --- */
+        const SWING_THEMES = {
+            21: { trailColors: ['#e2e8f0', '#ffffff', '#64748b'], particleType: 'suit', soundType: 'sharp', soundPitch: 620 },
+            22: { trailColors: ['#4c1d95', '#22d3ee', '#7e22ce'], particleType: 'kraken', soundType: 'wet', soundPitch: 290 },
+            23: { trailColors: ['#facc15', '#ef4444', '#fef08a'], particleType: 'drill', soundType: 'drill', soundPitch: 230 },
+            24: { trailColors: ['#92400e', '#84cc16', '#713f12'], particleType: 'poop', soundType: 'squish', soundPitch: 195 },
+            25: { trailColors: ['#818cf8', '#22d3ee', '#c084fc'], particleType: 'eternity', soundType: 'mystic', soundPitch: 440 },
+            26: { trailColors: ['#ef4444', '#f97316', '#fde047'], particleType: 'muscle', soundType: 'heavy', soundPitch: 155 },
+            27: { trailColors: ['#f472b6', '#facc15', '#38bdf8', '#a78bfa'], particleType: 'unicorn', soundType: 'chime', soundPitch: 760 },
+            28: { trailColors: ['#38bdf8', '#f59e0b', '#a855f7'], particleType: 'chronos', soundType: 'chronos', soundPitch: 340 },
+            29: { trailColors: ['#06b6d4', '#38bdf8', '#e0f2fe'], particleType: 'ai', soundType: 'laser', soundPitch: 700 },
+            30: { trailColors: ['#facc15', '#fef08a', '#fb7185'], particleType: 'banana', soundType: 'pop', soundPitch: 800 }
+        };
+
+        function getSwingTheme(lvl) {
+            if (SWING_THEMES[lvl]) return SWING_THEMES[lvl];
+            if (lvl >= 36) return { trailColors: ['#a855f7', '#38bdf8', '#facc15'], particleType: 'eternity', soundType: 'chronos', soundPitch: 480 };
+            if (lvl >= 31) return { trailColors: ['#ef4444', '#f97316', '#fde047'], particleType: 'drill', soundType: 'sharp', soundPitch: 560 };
+            if (lvl >= 11) return { trailColors: ['#38bdf8', '#e2e8f0', '#818cf8'], particleType: 'eternity', soundType: 'sharp', soundPitch: 520 };
+            return { trailColors: ['#94a3b8', '#f8fafc', '#f59e0b'], particleType: 'suit', soundType: 'sharp', soundPitch: 480 };
+        }
+
+        let swingActive = false;
+        let swingElapsed = 0;
+        const SWING_DURATION = 420;
+        let swingDir = 1;
+        let swingShakeTime = 0;
+        const swingSlashArcs = [];
+        const swingParticles = [];
+
+        function playSwingSfx(theme) {
+            if (!soundEnabled) return;
+            const ctxAudio = getAudioCtx();
+            if (!ctxAudio) return;
+            try {
+                const now = ctxAudio.currentTime;
+                const pitch = theme.soundPitch || 500;
+
+                const bufferSize = Math.floor(ctxAudio.sampleRate * 0.16);
+                const noiseBuffer = ctxAudio.createBuffer(1, bufferSize, ctxAudio.sampleRate);
+                const data = noiseBuffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+                const noise = ctxAudio.createBufferSource();
+                noise.buffer = noiseBuffer;
+                const filter = ctxAudio.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(pitch * 2.2, now);
+                filter.frequency.exponentialRampToValueAtTime(Math.max(100, pitch * 0.4), now + 0.15);
+                filter.Q.value = theme.soundType === 'sharp' ? 3.2 : 1.5;
+
+                const nGain = ctxAudio.createGain();
+                nGain.gain.setValueAtTime(0.001, now);
+                nGain.gain.linearRampToValueAtTime(0.16, now + 0.025);
+                nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+                noise.connect(filter);
+                filter.connect(nGain);
+                nGain.connect(ctxAudio.destination);
+                noise.start(now);
+
+                const osc = ctxAudio.createOscillator();
+                const oGain = ctxAudio.createGain();
+                if (theme.soundType === 'drill') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(140, now);
+                    osc.frequency.linearRampToValueAtTime(320, now + 0.18);
+                } else if (theme.soundType === 'squish') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(320, now);
+                    osc.frequency.exponentialRampToValueAtTime(95, now + 0.14);
+                } else if (theme.soundType === 'laser') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(1180, now);
+                    osc.frequency.exponentialRampToValueAtTime(240, now + 0.16);
+                } else if (theme.soundType === 'heavy') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(160, now);
+                    osc.frequency.exponentialRampToValueAtTime(48, now + 0.19);
+                } else if (theme.soundType === 'chime' || theme.soundType === 'pop') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(pitch, now);
+                    osc.frequency.exponentialRampToValueAtTime(pitch * 1.45, now + 0.14);
+                } else if (theme.soundType === 'chronos') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.exponentialRampToValueAtTime(180, now + 0.22);
+                } else {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(pitch * 1.2, now);
+                    osc.frequency.exponentialRampToValueAtTime(pitch * 0.55, now + 0.15);
+                }
+
+                oGain.gain.setValueAtTime(0.001, now);
+                oGain.gain.linearRampToValueAtTime(0.11, now + 0.02);
+                oGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+                osc.connect(oGain);
+                oGain.connect(ctxAudio.destination);
+                osc.start(now);
+                osc.stop(now + 0.21);
+            } catch (e) {}
+        }
+
+        function drawSwingStar(c, x, y, spikes, outerR, innerR) {
+            let rot = (Math.PI / 2) * 3;
+            const step = Math.PI / spikes;
+            c.beginPath();
+            c.moveTo(x, y - outerR);
+            for (let i = 0; i < spikes; i++) {
+                c.lineTo(x + Math.cos(rot) * outerR, y + Math.sin(rot) * outerR);
+                rot += step;
+                c.lineTo(x + Math.cos(rot) * innerR, y + Math.sin(rot) * innerR);
+                rot += step;
+            }
+            c.closePath();
+            c.fill();
+        }
+
+        function triggerCanvasSwing(clickX, clickY) {
+            if (isAnimating || getLockedGate(currentLevel)) return;
+            const theme = getSwingTheme(currentLevel);
+            const dir = swingDir;
+            swingDir *= -1;
+            swingActive = true;
+            swingElapsed = 0;
+            swingShakeTime = 180;
+
+            swingSlashArcs.push({
+                x: canvas.width * 0.5,
+                y: canvas.height * 0.54,
+                radius: 130,
+                startAngle: dir > 0 ? -Math.PI * 0.82 : Math.PI * 0.18,
+                endAngle: dir > 0 ? Math.PI * 0.28 : -Math.PI * 0.88,
+                dir,
+                life: 1.0,
+                decay: 0.052,
+                type: theme.particleType,
+                colors: theme.trailColors
+            });
+
+            const px = clickX ?? canvas.width * 0.5;
+            const py = clickY ?? canvas.height * 0.54;
+            for (let i = 0; i < 22; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 1.6 + Math.random() * 5.8;
+                swingParticles.push({
+                    x: px + (Math.random() - 0.5) * 32,
+                    y: py + (Math.random() - 0.5) * 32,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - (theme.particleType === 'kraken' ? 1.5 : 0.3),
+                    size: 2.6 + Math.random() * 5.2,
+                    rotation: Math.random() * Math.PI * 2,
+                    vRot: (Math.random() - 0.5) * 0.26,
+                    life: 1.0,
+                    decay: 0.02 + Math.random() * 0.025,
+                    color: theme.trailColors[Math.floor(Math.random() * theme.trailColors.length)],
+                    type: theme.particleType
+                });
+            }
+
+            playSwingSfx(theme);
+        }
+
+        function getSwingTransform() {
+            if (!swingActive) return { tx: 0, ty: 0, rot: 0, sc: 1 };
+            const t = Math.min(1, swingElapsed / SWING_DURATION);
+            const d = -swingDir; // 이번 스윙의 방향 (이미 반전되었으므로 부호 복원)
+            const lerp = (a, b, k) => a + (b - a) * k;
+            let tx = 0, ty = 0, deg = 0, sc = 1;
+            if (t < 0.18) {
+                const k = t / 0.18;
+                tx = lerp(0, -28 * d, k);
+                ty = lerp(0, -18, k);
+                deg = lerp(0, -52 * d, k);
+                sc = lerp(1, 1.04, k);
+            } else if (t < 0.44) {
+                const k = (t - 0.18) / 0.26;
+                tx = lerp(-28 * d, 40 * d, k);
+                ty = lerp(-18, 22, k);
+                deg = lerp(-52 * d, 74 * d, k);
+                sc = lerp(1.04, 1.12, k);
+            } else if (t < 0.68) {
+                const k = (t - 0.44) / 0.24;
+                tx = lerp(40 * d, 14 * d, k);
+                ty = lerp(22, 8, k);
+                deg = lerp(74 * d, 42 * d, k);
+                sc = lerp(1.12, 1.02, k);
+            } else {
+                const k = (t - 0.68) / 0.32;
+                tx = lerp(14 * d, 0, k);
+                ty = lerp(8, 0, k);
+                deg = lerp(42 * d, 0, k);
+                sc = lerp(1.02, 1, k);
+            }
+            return { tx, ty, rot: (deg * Math.PI) / 180, sc };
+        }
+
+        function updateAndDrawSwingFX(ctx, dt) {
+            if (swingActive) {
+                swingElapsed += dt;
+                if (swingElapsed >= SWING_DURATION) {
+                    swingActive = false;
+                    swingElapsed = 0;
+                }
+            }
+            if (swingShakeTime > 0) {
+                swingShakeTime = Math.max(0, swingShakeTime - dt);
+            }
+
+            // 1) 검기 아크
+            for (let i = swingSlashArcs.length - 1; i >= 0; i--) {
+                const arc = swingSlashArcs[i];
+                ctx.save();
+                ctx.translate(arc.x, arc.y);
+                ctx.globalAlpha = Math.max(0, arc.life);
+
+                if (arc.type === 'unicorn') {
+                    arc.colors.forEach((col, idx) => {
+                        ctx.beginPath();
+                        ctx.arc(0, 0, arc.radius + idx * 7 - 10, arc.startAngle, arc.endAngle, arc.dir < 0);
+                        ctx.strokeStyle = col;
+                        ctx.lineWidth = 7 * arc.life;
+                        ctx.lineCap = 'round';
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = col;
+                        ctx.stroke();
+                    });
+                } else if (arc.type === 'suit') {
+                    [-9, 0, 9].forEach((offset, idx) => {
+                        ctx.beginPath();
+                        ctx.arc(0, 0, arc.radius + offset, arc.startAngle, arc.endAngle, arc.dir < 0);
+                        ctx.strokeStyle = idx === 1 ? '#ffffff' : arc.colors[0];
+                        ctx.lineWidth = (idx === 1 ? 6 : 2.5) * arc.life;
+                        ctx.lineCap = 'round';
+                        ctx.stroke();
+                    });
+                } else if (arc.type === 'muscle') {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, arc.radius * 0.85, 0, Math.PI * 2);
+                    ctx.strokeStyle = arc.colors[0];
+                    ctx.lineWidth = 12 * arc.life;
+                    ctx.shadowBlur = 16;
+                    ctx.shadowColor = arc.colors[1];
+                    ctx.stroke();
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, arc.radius, arc.startAngle, arc.endAngle, arc.dir < 0);
+                    ctx.strokeStyle = arc.colors[0];
+                    ctx.lineWidth = (arc.type === 'ai' ? 11 : 18) * arc.life;
+                    ctx.lineCap = 'round';
+                    ctx.shadowBlur = 18;
+                    ctx.shadowColor = arc.colors[0];
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.arc(0, 0, arc.radius + 3, arc.startAngle, arc.endAngle, arc.dir < 0);
+                    ctx.strokeStyle = arc.colors[1] || '#ffffff';
+                    ctx.lineWidth = 5 * arc.life;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+                arc.radius += arc.type === 'muscle' ? 3.8 : 2.2;
+                arc.life -= arc.decay;
+                if (arc.life <= 0) swingSlashArcs.splice(i, 1);
+            }
+
+            // 2) 파티클
+            for (let i = swingParticles.length - 1; i >= 0; i--) {
+                const p = swingParticles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vx *= 0.96;
+                p.vy *= 0.96;
+                if (p.type === 'poop' || p.type === 'muscle') p.vy += 0.14;
+                if (p.type === 'kraken') p.vy -= 0.08;
+                p.rotation += p.vRot;
+                p.life -= p.decay;
+
+                if (p.life <= 0) {
+                    swingParticles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation);
+                ctx.globalAlpha = Math.max(0, p.life);
+                ctx.fillStyle = p.color;
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = p.color;
+
+                if (p.type === 'ai') {
+                    ctx.fillRect(-p.size * 0.7, -p.size * 0.7, p.size * 1.4, p.size * 1.4);
+                } else if (p.type === 'drill' || p.type === 'suit' || p.type === 'muscle') {
+                    ctx.fillRect(-p.size * 1.4, -p.size * 0.25, p.size * 2.8, p.size * 0.5);
+                } else if (p.type === 'unicorn' || p.type === 'eternity') {
+                    drawSwingStar(ctx, 0, 0, 4, p.size * 1.4, p.size * 0.45);
+                } else if (p.type === 'banana') {
+                    ctx.fillRect(-p.size, -p.size * 0.45, p.size * 2, p.size * 0.9);
+                } else if (p.type === 'kraken') {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, p.size * 0.9, 0, Math.PI * 2);
+                    if (p.color === '#22d3ee') {
+                        ctx.strokeStyle = p.color;
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    } else {
+                        ctx.fill();
+                    }
+                } else if (p.type === 'chronos') {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+                    ctx.strokeStyle = p.color;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+
+        canvas.addEventListener('pointerdown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+            triggerCanvasSwing(x, y);
+        });
+
+                function gameLoop(timestamp) {
             if (!lastTime) lastTime = timestamp;
             const dt = timestamp - lastTime;
             lastTime = timestamp;
@@ -3187,19 +3849,34 @@
                 flashAlpha = Math.max(0, hitEffectTime / 600); 
             }
 
-            const cx = (canvas.width / 2) + suspenseShakeX;
-            const cy = (canvas.height * 0.75) + suspenseShakeY;
+            const swingShakeX = swingShakeTime > 0 ? (Math.random() - 0.5) * 6 : 0;
+            const swingShakeY = swingShakeTime > 0 ? (Math.random() - 0.5) * 6 : 0;
+            const cx = (canvas.width / 2) + suspenseShakeX + swingShakeX;
+            const cy = (canvas.height * 0.75) + suspenseShakeY + swingShakeY;
 
             if (!(hammerState === 'HIT' && hitEffectResult === 'DESTROY' && hitEffectTime < 200)) {
-                drawSwordOnContext(ctx, currentLevel, cx, cy, 1, true);
+                const st = getSwingTransform();
+                ctx.save();
+                ctx.translate(cx + st.tx, cy - 60 + st.ty);
+                ctx.rotate(st.rot);
+                ctx.scale(st.sc, st.sc);
+                drawSwordOnContext(ctx, currentLevel, 0, 60, 1, true);
+                ctx.restore();
                 ctx.save();
                 ctx.font = "bold 1.8rem 'Noto Sans KR', sans-serif";
                 ctx.fillStyle = "#2c3e50";
                 ctx.textAlign = "center";
-                ctx.fillText(`Lv.${currentLevel} ${getSwordName(currentLevel)}`, cx, 40 + suspenseShakeY);
+                ctx.fillText(`Lv.${currentLevel} ${getSwordName(currentLevel)}`, cx, 40 + suspenseShakeY, canvas.width - 24);
+                if (CUSTOM_SVG_SWORDS[currentLevel]) {
+                    ctx.font = "bold 12px 'Noto Sans KR', sans-serif";
+                    ctx.fillStyle = "#7f8c8d";
+                    ctx.textAlign = "right";
+                    ctx.fillText("design by 설악중 서동율", canvas.width - 14, 62 + suspenseShakeY);
+                }
                 ctx.restore();
             }
 
+            updateAndDrawSwingFX(ctx, dt);
             drawActiveItemsOnCanvas(ctx);
 
             if (hammerState === 'SWING_BACK') {
@@ -3373,8 +4050,8 @@
             const names = [
                 "나뭇가지", "일반검", "뚱뚱한 단검", "곡도", "번개검", "쌍포크검", "톱날검", "플라스틱 자(Ruler)검", "연필검", "가시나무검",
                 "화염검", "얼음검", "하트검", "별모양 지팡이검", "달검", "넙적 대검", "도끼", "사신의 낫", "쌍인검", "눈동자 마검",
-                "포세이돈 삼지창", "박쥐날개검", "팽이 회오리검", "해적 갈고리검", "체인 사슬검", "끈적 슬라임검", "표지판 화살표검", "마법의 열쇠검", "뚱뚱 선인장검", "미라 붕대검",
-                "천사 날개검", "드래곤 머리검", "더블 겹검", "유리 파편검", "용수철 스프링검", "알수없는 혼돈의 검",
+                "포세이돈 삼지창", "양복칼", "크라켄 촉수칼", "기가드릴 라이더", "똥칼", "영원의 대검", "전완근 블레이드", "유니콘 블레이드", "크로노스의 부러진 시공간 영원의 칼", "AI안경 칼",
+                "바나나 소드", "드래곤 머리검", "더블 겹검", "유리 파편검", "용수철 스프링검", "알수없는 혼돈의 검",
                 "초월: 성운의 심판", "초월: 태양계의 지배자", "초월: 은하단 파괴자", "초월: 우주의 창조신"
             ];
             return lvl < names.length ? names[lvl] : `초월검 [${lvl}단계]`;
@@ -3605,6 +4282,33 @@
         let selectedRankVersion = 'ALL'; // 'ALL' | 'CURRENT' | 'LEGACY'
         let selectedRankGrade = 'ALL';   // 'ALL' | number
         let selectedRankClass = 'ALL';   // 'ALL' | number
+        let selectedRankSortKey = 'maxLevel';
+        let selectedRankSortDir = 'desc'; // 'desc' | 'asc'
+
+        function updateRankingSortHeaders() {
+            document.querySelectorAll('.rank-table th.sortable-th').forEach(th => {
+                const key = th.getAttribute('data-sort');
+                const arrow = th.querySelector('.sort-arrow');
+                if (key === selectedRankSortKey) {
+                    th.classList.add('sort-active');
+                    if (arrow) arrow.innerText = selectedRankSortDir === 'desc' ? '▼' : '▲';
+                } else {
+                    th.classList.remove('sort-active');
+                    if (arrow) arrow.innerText = '⇅';
+                }
+            });
+        }
+
+        window.toggleRankSort = (key) => {
+            if (selectedRankSortKey === key) {
+                selectedRankSortDir = selectedRankSortDir === 'desc' ? 'asc' : 'desc';
+            } else {
+                selectedRankSortKey = key;
+                selectedRankSortDir = 'desc';
+            }
+            updateRankingSortHeaders();
+            renderRankingRows();
+        };
 
         function parseVersionTuple(verStr) {
             if (!verStr || typeof verStr !== 'string') return [-1];
@@ -3624,7 +4328,7 @@
         }
 
         function getVersionBucket(recordVersion) {
-            const curVer = typeof GAME_VERSION !== 'undefined' ? String(GAME_VERSION) : 'v33.06';
+            const curVer = typeof GAME_VERSION !== 'undefined' ? String(GAME_VERSION) : 'v33.15';
             if (!recordVersion) return 'LEGACY';
             const recStr = String(recordVersion).trim();
             if (recStr === curVer) return 'CURRENT';
@@ -3675,7 +4379,7 @@
             const bar = document.getElementById('rank-version-filter-bar');
             if (!bar) return;
 
-            const curVer = typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.06';
+            const curVer = typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.15';
             const allCount = cachedRankingsList.length;
             const currentCount = cachedRankingsList.filter(r => getVersionBucket(r.version) === 'CURRENT').length;
             const legacyCount = cachedRankingsList.filter(r => getVersionBucket(r.version) === 'LEGACY').length;
@@ -3746,6 +4450,20 @@
             const filtered = getFilteredByGrade().filter(r => {
                 if (selectedRankClass === 'ALL') return true;
                 return Number(r.classNum) === Number(selectedRankClass);
+            }).slice().sort((a, b) => {
+                const getVal = (obj, k) => {
+                    if (k === 'multiplier') return Number(obj.multiplier ?? 1);
+                    return Number(obj[k] ?? 0);
+                };
+                const va = getVal(a, selectedRankSortKey);
+                const vb = getVal(b, selectedRankSortKey);
+                if (va !== vb) {
+                    return selectedRankSortDir === 'desc' ? (vb - va) : (va - vb);
+                }
+                // 동점 시 기본 보조 정렬: 최고 레벨 내림차순 -> 푼 문제 수 내림차순 -> 강화 횟수 오름차순
+                if ((b.maxLevel ?? 0) !== (a.maxLevel ?? 0)) return (b.maxLevel ?? 0) - (a.maxLevel ?? 0);
+                if ((b.problemsSolved ?? 0) !== (a.problemsSolved ?? 0)) return (b.problemsSolved ?? 0) - (a.problemsSolved ?? 0);
+                return (a.enhanceCount ?? 0) - (b.enhanceCount ?? 0);
             });
 
             if (filtered.length === 0) {
@@ -3785,7 +4503,7 @@
 
         window.submitFirebaseRanking = async (grade, classNum, number, stats) => {
             const isTeacher = (grade === 1206 && classNum === 1206 && number === 1206);
-            const ver = stats.version || (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.06');
+            const ver = stats.version || (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.15');
             const docId = isTeacher ? `teacher-1206-${ver}` : `${grade}-${classNum}-${number}-${ver}`;
             const displayLabel = isTeacher ? '과학쌤' : `${grade}${classNum}${String(number).padStart(2, '0')}`;
             const docRef = doc(db, 'rankings', docId);
@@ -3828,6 +4546,7 @@
                 cachedRankingsList = list;
                 renderVersionFilterBar();
                 renderGradeClassFilterBar();
+                updateRankingSortHeaders();
                 renderRankingRows();
             } catch (err) {
                 console.error(err);
