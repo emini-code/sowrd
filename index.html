@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 검강화게임 v33.37 -->
+<!-- 검강화게임 v33.38 -->
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -1409,6 +1409,84 @@
             border: 1.5px solid #475569;
             border-radius: 6px;
         }
+        #dev-prob-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.82);
+            z-index: 9600;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        #dev-prob-box {
+            width: 100%;
+            max-width: 720px;
+            max-height: 86vh;
+            overflow-y: auto;
+            background: #0f172a;
+            color: #e2e8f0;
+            border: 2px solid #38bdf8;
+            border-radius: 12px;
+            padding: 18px 20px;
+            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.6);
+            box-sizing: border-box;
+            font-size: 0.9rem;
+        }
+        .dev-prob-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .dev-prob-controls {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+        }
+        .dev-prob-checks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 14px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .dev-prob-checks label {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #f1f5f9;
+            user-select: none;
+        }
+        .dev-prob-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #334155;
+            border-radius: 8px;
+        }
+        .dev-prob-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            font-size: 0.86rem;
+        }
+        .dev-prob-table th, .dev-prob-table td {
+            padding: 7px 6px;
+            border-bottom: 1px solid #1e293b;
+            white-space: nowrap;
+        }
+        .dev-prob-table th {
+            background: #1e293b;
+            color: #38bdf8;
+            font-weight: bold;
+        }
+        .dev-prob-table tr:nth-child(even) {
+            background: rgba(30, 41, 59, 0.45);
+        }
     </style>
 </head>
 <body>
@@ -1419,7 +1497,7 @@
     <button id="help-btn" onclick="openHelpModal()" title="게임 방법 안내">❓ 도움말</button>
     <button id="sound-btn" onclick="toggleSound()" title="효과음 켜기/끄기">🔊 효과음</button>
     <button id="fullscreen-btn" onclick="toggleFullscreen()" title="전체화면 전환">⛶ 전체화면</button>
-    <div id="version-badge">v33.37</div>
+    <div id="version-badge">v33.38</div>
 
     <!-- Title Screen -->
     <div id="title-screen">
@@ -1445,7 +1523,7 @@
                 <ul>
                     <li><strong>강화하기:</strong> [망치질 하기!] 버튼을 눌러 구간별 골드(0~10강 50G / 11~20강 100G / 21~30강 200G / 31강 이상 500G)를 소모해 검을 최대 40단계까지 강화하세요.</li>
                     <li><strong>필수 문제 &amp; 구간 해금:</strong> 게임 시작 시 필수 문제를 모두 맞히면 강화가 해금되고 <strong>500G</strong>를 획득합니다. (오답 시 1번 문제부터 처음부터 다시 풀이) 이후 5·10단계(하), 15·20단계(중), 25단계 이상(상) 구간 해금 문제를 통과해야 다음 단계로 강화할 수 있습니다. (기회 1회, 오답 시 1단계 하락)</li>
-                    <li><strong>돈벌기 &amp; 퀴즈:</strong> [돈벌기] 탭에서 과학 퀴즈를 풀면 250G(배율 적용)를 얻으며, 연속 정답 게이지를 채워 5연속(+500G), 10연속(실패 확률 -10%), 15연속(성공 확률 +10%) 보상을 순서대로 받습니다. 퀴즈 10문제를 맞히면 [공짜로 돈벌기]가 해금됩니다.</li>
+                    <li><strong>돈벌기 &amp; 퀴즈:</strong> [돈벌기] 탭에서 과학 퀴즈를 풀면 250G(배율 적용)를 얻으며, 연속 정답 게이지를 채워 5연속(+500G), 10연속(강화 3회 동안 실패 확률 -10%), 15연속(강화 3회 동안 실패 확률 -10% 및 성공 확률 +10%) 보상을 순서대로 받습니다. <strong>(※ 연속 정답 버프 효과는 중첩되지 않습니다.)</strong> 퀴즈 10문제를 맞히면 [공짜로 돈벌기]가 해금됩니다.</li>
                     <li><strong>상점 &amp; 검 상점:</strong> 물약, 장비 파괴 보호권(35단계까지 파괴 방지, 3,000G), 파괴 완화권(15단계 이상, 파괴 시 -10단계, 1,000G)을 구매할 수 있으며, 최고 도달 레벨(10·20·30단계)에 따라 [검 상점]에서 해당 단계 검을 직접 구매할 수 있습니다.</li>
                     <li><strong>희생, 보관 &amp; 재물:</strong> 11단계 이상의 검을 희생하면 퀴즈와 공짜 돈벌기 배율이 영구 증가합니다. 인벤토리에 보관한 검은 꺼내 쓰거나 <strong>[검 재물로 바치기]</strong>로 소모해 강화 성공 확률 증가·실패 확률 감소 효과를 얻을 수 있습니다.</li>
                     <li><strong>피버 타임:</strong> 강화 시 '유지'가 5연속 나오면 3초간 골드 소모 없이 0.5초마다 광클 강화가 가능합니다!</li>
@@ -1536,7 +1614,7 @@
     <div id="quiz-modal">
         <div id="quiz-content">
             <h2 id="quiz-title" style="font-size: 1.9rem; margin-top:0; background:#fff; border: 2px solid #333; display:inline-block; padding:5px 20px;">퀴즈로 돈벌기</h2>
-            <p id="quiz-info-msg" style="font-size: 0.9rem; color: #e74c3c; margin-top: 10px; margin-bottom: 10px; text-align: center; word-break:keep-all; font-weight: bold;">※ 연속 정답 5회: +500G / 10회: 실패 확률 -10% / 15회: 성공 확률 +10% 버프가 적용됩니다!</p>
+            <p id="quiz-info-msg" style="font-size: 0.9rem; color: #e74c3c; margin-top: 10px; margin-bottom: 10px; text-align: center; word-break:keep-all; font-weight: bold;">※ 연속 정답 5회: +500G / 10회: 강화 3회 실패 확률 -10% / 15회: 강화 3회 실패 -10% &amp; 성공 +10% (※ 버프 효과는 중첩되지 않습니다!)</p>
             <div id="quiz-play" style="display:none;">
                 <div id="quiz-streak" style="display:none; font-size: 1.0rem; color: #e74c3c; margin-bottom: 10px; font-weight: bold;">🔥 연속 정답: 0</div>
                 <div id="quiz-streak-gauge-wrap">
@@ -1547,9 +1625,10 @@
                     <div id="streak-gauge-cells" class="streak-gauge-cells"></div>
                     <div class="streak-milestones">
                         <div id="ms-tag-5" class="streak-milestone-tag">5칸: 💰 +500G</div>
-                        <div id="ms-tag-10" class="streak-milestone-tag">10칸: 🛡️ 실패 -10%</div>
-                        <div id="ms-tag-15" class="streak-milestone-tag">15칸: ⭐ 성공 +10%</div>
+                        <div id="ms-tag-10" class="streak-milestone-tag">10칸: 🛡️ 실패 -10% (3회)</div>
+                        <div id="ms-tag-15" class="streak-milestone-tag">15칸: ⭐ 성공 +10% (3회)</div>
                     </div>
+                    <div style="margin-top:6px; font-size:0.78rem; color:#e74c3c; font-weight:bold;">※ 연속 정답 버프는 강화 3회 동안 유지되며, 중첩되지 않습니다.</div>
                 </div>
                 <div id="quiz-question" style="font-size: 1.35rem; margin-bottom: 20px; font-weight:bold; background:rgba(255,255,255,0.8); padding:10px; border-radius:5px; word-break:keep-all;">문제 내용</div>
                 
@@ -1640,6 +1719,59 @@
         <div class="dev-row">
             <button class="dev-btn" onclick="devApplyStreakBuffs()">🔥 연속 버프 적용</button>
             <button class="dev-btn dev-danger" onclick="devResetGame()">🔄 초기화</button>
+        </div>
+
+        <div class="dev-sec-title">📊 확률표 조회</div>
+        <div class="dev-row">
+            <button class="dev-btn dev-primary" onclick="openDevProbModal('base')">📋 기본 확률표</button>
+            <button class="dev-btn dev-primary" onclick="openDevProbModal('item')">🧪 아이템 적용표</button>
+        </div>
+    </div>
+
+    <!-- Developer Probability Table Modal -->
+    <div id="dev-prob-modal" onclick="if(event.target === this) closeDevProbModal()">
+        <div id="dev-prob-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:8px; margin-bottom:12px;">
+                <span style="font-size:1.05rem; font-weight:bold; color:#38bdf8;">📊 개발자 강화 확률표</span>
+                <button class="dev-btn" style="flex:0; min-width:auto; padding:3px 10px;" onclick="closeDevProbModal()">✕ 닫기</button>
+            </div>
+            <div class="dev-prob-tabs">
+                <button id="dev-prob-tab-base" class="dev-btn dev-primary" onclick="switchDevProbTab('base')">📋 기본 강화확률표</button>
+                <button id="dev-prob-tab-item" class="dev-btn" onclick="switchDevProbTab('item')">🧪 아이템 적용 시 확률표</button>
+            </div>
+            <div id="dev-prob-item-controls" class="dev-prob-controls" style="display:none;">
+                <div class="dev-prob-checks">
+                    <label><input type="checkbox" id="dp-opt-success" onchange="renderDevProbTable()"> 성공 물약(+10%)</label>
+                    <label><input type="checkbox" id="dp-opt-fail" onchange="renderDevProbTable()"> 실패 감소 물약(-10%)</label>
+                    <label><input type="checkbox" id="dp-opt-protect" onchange="renderDevProbTable()"> 파괴 보호권(≤35강)</label>
+                    <label><input type="checkbox" id="dp-opt-buff-fail" onchange="renderDevProbTable()"> 10연속 버프(실패-10%)</label>
+                    <label><input type="checkbox" id="dp-opt-buff-success" onchange="renderDevProbTable()"> 15연속 버프(성공+10%)</label>
+                    <label>재물 검 Lv. <input type="number" id="dp-opt-offer" min="0" max="39" value="0" oninput="renderDevProbTable()" style="width:52px; padding:2px 4px; background:#0f172a; color:#f8fafc; border:1px solid #475569; border-radius:4px; text-align:center;"></label>
+                </div>
+                <div class="dev-row" style="margin-bottom:0;">
+                    <button class="dev-btn" onclick="setDevProbPreset('clear')">전체 해제</button>
+                    <button class="dev-btn" onclick="setDevProbPreset('potions')">물약 2종</button>
+                    <button class="dev-btn" onclick="setDevProbPreset('full')">풀도핑(물약+보호권)</button>
+                    <button class="dev-btn" onclick="setDevProbPreset('current')">현재 적용 상태 불러오기</button>
+                </div>
+            </div>
+            <div class="dev-prob-table-wrap">
+                <table class="dev-prob-table">
+                    <thead>
+                        <tr>
+                            <th>구간</th>
+                            <th>비용</th>
+                            <th style="color:#4ade80;">대성공 (+2)</th>
+                            <th style="color:#38bdf8;">성공 (+1)</th>
+                            <th style="color:#cbd5e1;">유지 (0)</th>
+                            <th style="color:#fbbf24;">실패 (-1)</th>
+                            <th style="color:#f87171;">파괴</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dev-prob-tbody"></tbody>
+                </table>
+            </div>
+            <div id="dev-prob-note" style="margin-top:10px; font-size:0.8rem; color:#94a3b8; line-height:1.45;"></div>
         </div>
     </div>
 
@@ -1887,7 +2019,7 @@
 
     <script>
         /** --- 게임 버전 정보 --- */
-        const GAME_VERSION = 'v33.37';
+        const GAME_VERSION = 'v33.38';
 
         /** --- 자동 탐색된 퀴즈 파일 목록 --- */
         let QUIZ_FILES = [];
@@ -2407,7 +2539,7 @@
         let wasSuspense = false;
 
         let quizStreak = 0;
-        let activeBuffs = { success: false, fail_reduce: false };
+        let activeBuffs = { success: 0, fail_reduce: 0 };
         let maintainStreak = 0;
         let isFever = false;
         let feverTime = 0;
@@ -2939,16 +3071,17 @@
                         addLog("🔥 5연속 정답! 보너스 500 골드가 추가 지급되었습니다.", "c-s");
                         updateGoldUI();
                     } else if (quizStreak === 10) {
-                        activeBuffs.fail_reduce = true;
-                        streakRewardMsg = '🎉 10연속 정답 달성! 실패 확률이 -10% 감소했습니다!';
-                        msg += " 🎉 실패 확률 -10% 버프 획득!";
-                        addLog("🔥 10연속 정답! 1회 실패 확률 감소(-10%) 버프가 적용됩니다.", "c-s");
+                        activeBuffs.fail_reduce = 3;
+                        streakRewardMsg = '🎉 10연속 정답 달성! 강화 3회 동안 실패 확률이 -10% 감소합니다! (중첩 불가)';
+                        msg += " 🎉 실패 확률 -10% 버프 획득! (강화 3회)";
+                        addLog("🔥 10연속 정답! 강화 3회 동안 실패 확률 감소(-10%) 버프가 적용됩니다. (중첩 불가)", "c-s");
                         updateProbUI();
                     } else if (quizStreak === 15) {
-                        activeBuffs.success = true;
-                        streakRewardMsg = '🎉 15연속 정답 달성! 성공 확률이 +10% 증가했습니다!';
-                        msg += " 🎉 성공 확률 +10% 버프 획득!";
-                        addLog("🔥 15연속 정답! 1회 성공 확률 증가(+10%) 버프가 적용됩니다.", "c-s");
+                        activeBuffs.fail_reduce = 3;
+                        activeBuffs.success = 3;
+                        streakRewardMsg = '🎉 15연속 정답 달성! 강화 3회 동안 실패 확률 -10% & 성공 확률 +10% 버프가 적용됩니다! (중첩 불가)';
+                        msg += " 🎉 실패 -10% & 성공 +10% 버프 획득! (강화 3회)";
+                        addLog("🔥 15연속 정답! 강화 3회 동안 실패 확률 감소(-10%) 및 성공 확률 증가(+10%) 버프가 적용됩니다. (중첩 불가)", "c-s");
                         updateProbUI();
                     }
                     addLog(msg, "c-info");
@@ -3373,12 +3506,12 @@
                 baseD = 0;
             }
 
-            if (activeBuffs.success) {
+            if (activeBuffs.success > 0) {
                 baseS += 10;
                 if (baseF >= 5) baseF -= 5;
                 if (baseD >= 5) baseD -= 5;
             }
-            if (activeBuffs.fail_reduce) {
+            if (activeBuffs.fail_reduce > 0) {
                 if (baseF >= 10) { baseF -= 10; baseM += 10; }
                 else { baseM += baseF; baseF = 0; }
             }
@@ -3414,8 +3547,8 @@
             const offerFailTag = hasOffer ? ` <span style="color:#8e44ad; font-weight:bold;">(-${offerBonus.toFixed(1)}%)</span>` : '';
             probList.innerHTML = `
                 ${hasOffer ? `<li style="color:#8e44ad; font-weight:bold; font-size:1.15rem; margin-bottom:8px;">🔥 재물 선택됨: Lv.${getInvLevel(inventory[offeredInvIdx])} 검</li>` : ''}
-                ${activeBuffs.fail_reduce ? '<li style="color:#2980b9; font-weight:bold; font-size:1.15rem; margin-bottom:8px;">🛡️ 10연속 정답 버프! (실패 -10%)</li>' : ''}
-                ${activeBuffs.success ? '<li style="color:#27ae60; font-weight:bold; font-size:1.15rem; margin-bottom:8px;">⭐ 15연속 정답 버프! (성공 +10%)</li>' : ''}
+                ${activeBuffs.fail_reduce > 0 ? `<li style="color:#2980b9; font-weight:bold; font-size:1.1rem; margin-bottom:6px;">🛡️ 10연속 정답 버프! (실패 -10%, 남은 ${activeBuffs.fail_reduce}회 · 중첩 불가)</li>` : ''}
+                ${activeBuffs.success > 0 ? `<li style="color:#27ae60; font-weight:bold; font-size:1.1rem; margin-bottom:6px;">⭐ 15연속 정답 버프! (성공 +10%, 남은 ${activeBuffs.success}회 · 중첩 불가)</li>` : ''}
                 <li class="c-s">대성공 (+2): ${p.great.toFixed(1)}%</li>
                 <li class="c-s">성공 (+1): ${p.success.toFixed(1)}%${offerSuccessTag}</li>
                 <li class="c-m">유지 (0): ${p.maintain.toFixed(1)}%</li>
@@ -3557,10 +3690,17 @@
                 addLog(`🔥 Lv.${usedLvl} 검을 재물로 바쳐 강화에 사용했습니다!`, "c-info");
                 updateInventoryUI();
             }
-            if (activeBuffs.success || activeBuffs.fail_reduce) {
-                activeBuffs.success = false;
-                activeBuffs.fail_reduce = false;
-                addLog("🔥 퀴즈 연속 정답 버프가 소모되었습니다.", "c-m");
+            if (activeBuffs.success > 0 || activeBuffs.fail_reduce > 0) {
+                if (activeBuffs.success > 0) activeBuffs.success--;
+                if (activeBuffs.fail_reduce > 0) activeBuffs.fail_reduce--;
+                const remParts = [];
+                if (activeBuffs.fail_reduce > 0) remParts.push(`실패 -10% ${activeBuffs.fail_reduce}회`);
+                if (activeBuffs.success > 0) remParts.push(`성공 +10% ${activeBuffs.success}회`);
+                if (remParts.length > 0) {
+                    addLog(`🔥 퀴즈 연속 정답 버프 적용! (남은 횟수: ${remParts.join(', ')})`, "c-m");
+                } else {
+                    addLog("🔥 퀴즈 연속 정답 버프가 모두 소모되었습니다.", "c-m");
+                }
             }
             
             updateItemUI();
@@ -5000,10 +5140,10 @@
 
         function devApplyStreakBuffs() {
             quizStreak = 15;
-            activeBuffs.fail_reduce = true;
-            activeBuffs.success = true;
+            activeBuffs.fail_reduce = 3;
+            activeBuffs.success = 3;
             updateProbUI();
-            addLog("🛠️ [DEV] 연속 정답 버프(실패 -10%, 성공 +10%) 적용됨.", "c-s");
+            addLog("🛠️ [DEV] 연속 정답 버프(실패 -10%, 성공 +10% · 각 강화 3회, 중첩 불가) 적용됨.", "c-s");
         }
 
         function devQuickSetup() {
@@ -5032,7 +5172,7 @@
             items = { success: 3, fail: 3, protect: 3, downgrade: 0 };
             activeItems = { success: false, fail: false, protect: false, downgrade: false };
             quizStreak = 0;
-            activeBuffs = { success: false, fail_reduce: false };
+            activeBuffs = { success: 0, fail_reduce: 0 };
             maintainStreak = 0;
             isFever = false;
             feverTime = 0;
@@ -5046,6 +5186,160 @@
             updateSwordShopUI();
             updateDevPanelUI();
             addLog("🛠️ [DEV] 게임 상태를 초기 상태로 되돌렸습니다.", "c-f");
+        }
+
+        let devProbTab = 'base';
+
+        function calcProbForLevel(level, opts = {}) {
+            let baseS = 100, baseG = 0, baseM = 0, baseF = 0, baseD = 0;
+            if (level <= 5) { baseG = 20; baseS = 70; baseM = 10; baseF = 0; baseD = 0; }
+            else if (level <= 10) { baseG = 10; baseS = 60; baseM = 15; baseF = 15; baseD = 0; }
+            else if (level <= 15) { baseG = 5; baseS = 50; baseM = 25; baseF = 15; baseD = 5; }
+            else if (level <= 20) { baseG = 5; baseS = 45; baseM = 30; baseF = 15; baseD = 5; }
+            else if (level <= 25) { baseG = 5; baseS = 40; baseM = 30; baseF = 20; baseD = 5; }
+            else if (level <= 29) { baseG = 1; baseS = 35; baseM = 30; baseF = 24; baseD = 10; }
+            else if (level <= 35) { baseG = 0; baseS = 25; baseM = 5; baseF = 40; baseD = 30; }
+            else { baseG = 0; baseS = 20; baseM = 0; baseF = 40; baseD = 40; }
+
+            if (opts.success) {
+                baseS += 10;
+                if (baseF >= 5) baseF -= 5;
+                if (baseD >= 5) baseD -= 5;
+            }
+            if (opts.fail) {
+                if (baseF >= 10) { baseF -= 10; baseM += 10; }
+                else { baseM += baseF; baseF = 0; }
+            }
+            if (opts.protect && level < 36) {
+                baseM += baseD;
+                baseD = 0;
+            }
+            if (opts.buffSuccess) {
+                baseS += 10;
+                if (baseF >= 5) baseF -= 5;
+                if (baseD >= 5) baseD -= 5;
+            }
+            if (opts.buffFail) {
+                if (baseF >= 10) { baseF -= 10; baseM += 10; }
+                else { baseM += baseF; baseF = 0; }
+            }
+            const offerLvl = Math.max(0, Math.min(39, Number(opts.offerLevel) || 0));
+            if (offerLvl > 0) {
+                const offerBonus = offerLvl / 4;
+                baseS += offerBonus;
+                const fDrop = Math.min(baseF, offerBonus);
+                baseF -= fDrop;
+                const rem = offerBonus - fDrop;
+                if (rem > 0) {
+                    const mDrop = Math.min(baseM, rem);
+                    baseM -= mDrop;
+                }
+            }
+
+            const total = baseS + baseG + baseM + baseF + baseD;
+            return {
+                great: (baseG / total) * 100,
+                success: (baseS / total) * 100,
+                maintain: (baseM / total) * 100,
+                fail: (baseF / total) * 100,
+                destroy: (baseD / total) * 100
+            };
+        }
+
+        function openDevProbModal(tab = 'base') {
+            const modal = document.getElementById('dev-prob-modal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            switchDevProbTab(tab);
+        }
+
+        function closeDevProbModal() {
+            const modal = document.getElementById('dev-prob-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function switchDevProbTab(tab) {
+            devProbTab = tab === 'item' ? 'item' : 'base';
+            const btnBase = document.getElementById('dev-prob-tab-base');
+            const btnItem = document.getElementById('dev-prob-tab-item');
+            const ctrl = document.getElementById('dev-prob-item-controls');
+            if (btnBase) btnBase.classList.toggle('dev-primary', devProbTab === 'base');
+            if (btnItem) btnItem.classList.toggle('dev-primary', devProbTab === 'item');
+            if (ctrl) ctrl.style.display = devProbTab === 'item' ? 'block' : 'none';
+            renderDevProbTable();
+        }
+
+        function setDevProbPreset(preset) {
+            const elS = document.getElementById('dp-opt-success');
+            const elF = document.getElementById('dp-opt-fail');
+            const elP = document.getElementById('dp-opt-protect');
+            const elBF = document.getElementById('dp-opt-buff-fail');
+            const elBS = document.getElementById('dp-opt-buff-success');
+            const elO = document.getElementById('dp-opt-offer');
+            if (preset === 'clear') {
+                elS.checked = false; elF.checked = false; elP.checked = false;
+                elBF.checked = false; elBS.checked = false; elO.value = 0;
+            } else if (preset === 'potions') {
+                elS.checked = true; elF.checked = true; elP.checked = false;
+                elBF.checked = false; elBS.checked = false; elO.value = 0;
+            } else if (preset === 'full') {
+                elS.checked = true; elF.checked = true; elP.checked = true;
+                elBF.checked = false; elBS.checked = false; elO.value = 0;
+            } else if (preset === 'current') {
+                elS.checked = Boolean(activeItems.success);
+                elF.checked = Boolean(activeItems.fail);
+                elP.checked = Boolean(activeItems.protect);
+                elBF.checked = activeBuffs.fail_reduce > 0;
+                elBS.checked = activeBuffs.success > 0;
+                elO.value = (offeredInvIdx !== null && inventory[offeredInvIdx] !== null) ? getInvLevel(inventory[offeredInvIdx]) : 0;
+            }
+            renderDevProbTable();
+        }
+
+        function renderDevProbTable() {
+            const tbody = document.getElementById('dev-prob-tbody');
+            const noteEl = document.getElementById('dev-prob-note');
+            if (!tbody) return;
+
+            const tiers = [
+                { label: '0 ~ 5강', sample: 0, cost: '50G' },
+                { label: '6 ~ 10강', sample: 6, cost: '50G' },
+                { label: '11 ~ 15강', sample: 11, cost: '100G' },
+                { label: '16 ~ 20강', sample: 16, cost: '100G' },
+                { label: '21 ~ 25강', sample: 21, cost: '200G' },
+                { label: '26 ~ 29강', sample: 26, cost: '200G' },
+                { label: '30강', sample: 30, cost: '200G' },
+                { label: '31 ~ 35강', sample: 31, cost: '500G' },
+                { label: '36 ~ 39강', sample: 36, cost: '500G' }
+            ];
+
+            const opts = devProbTab === 'item' ? {
+                success: document.getElementById('dp-opt-success')?.checked,
+                fail: document.getElementById('dp-opt-fail')?.checked,
+                protect: document.getElementById('dp-opt-protect')?.checked,
+                buffFail: document.getElementById('dp-opt-buff-fail')?.checked,
+                buffSuccess: document.getElementById('dp-opt-buff-success')?.checked,
+                offerLevel: document.getElementById('dp-opt-offer')?.value
+            } : {};
+
+            tbody.innerHTML = tiers.map(t => {
+                const p = calcProbForLevel(t.sample, opts);
+                return `<tr>
+                    <td style="font-weight:bold; color:#f8fafc;">${t.label}</td>
+                    <td style="color:#facc15;">${t.cost}</td>
+                    <td style="color:#4ade80; font-weight:bold;">${p.great.toFixed(1)}%</td>
+                    <td style="color:#38bdf8; font-weight:bold;">${p.success.toFixed(1)}%</td>
+                    <td style="color:#cbd5e1;">${p.maintain.toFixed(1)}%</td>
+                    <td style="color:#fbbf24;">${p.fail.toFixed(1)}%</td>
+                    <td style="color:#f87171; font-weight:bold;">${p.destroy.toFixed(1)}%</td>
+                </tr>`;
+            }).join('');
+
+            if (noteEl) {
+                noteEl.innerHTML = devProbTab === 'item'
+                    ? '• <strong>장비 파괴 보호권</strong>은 35강까지만 적용되며, 36강 이상에서는 파괴 확률이 그대로 유지됩니다.<br>• <strong>파괴 완화권</strong>은 확률을 바꾸지 않으며, 15강 이상에서 파괴 발생 시 소멸 대신 -10단계로 하락합니다.'
+                    : '• 아이템 및 퀴즈 연속 정답 버프 미적용 기준 기본 강화 확률표입니다.';
+            }
         }
 
         document.addEventListener('keydown', (e) => {
@@ -5139,7 +5433,7 @@
         }
 
         function getVersionBucket(recordVersion) {
-            const curVer = typeof GAME_VERSION !== 'undefined' ? String(GAME_VERSION) : 'v33.37';
+            const curVer = typeof GAME_VERSION !== 'undefined' ? String(GAME_VERSION) : 'v33.38';
             if (!recordVersion) return 'LEGACY';
             const recStr = String(recordVersion).trim();
             if (recStr === curVer) return 'CURRENT';
@@ -5190,7 +5484,7 @@
             const bar = document.getElementById('rank-version-filter-bar');
             if (!bar) return;
 
-            const curVer = typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.37';
+            const curVer = typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.38';
             const allCount = cachedRankingsList.length;
             const currentCount = cachedRankingsList.filter(r => getVersionBucket(r.version) === 'CURRENT').length;
             const legacyCount = cachedRankingsList.filter(r => getVersionBucket(r.version) === 'LEGACY').length;
@@ -5314,7 +5608,7 @@
 
         window.submitFirebaseRanking = async (grade, classNum, number, stats) => {
             const isTeacher = (grade === 1206 && classNum === 1206 && number === 1206);
-            const ver = stats.version || (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.37');
+            const ver = stats.version || (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'v33.38');
             const docId = isTeacher ? `teacher-1206-${ver}` : `${grade}-${classNum}-${number}-${ver}`;
             const displayLabel = isTeacher ? '과학쌤' : `${grade}${classNum}${String(number).padStart(2, '0')}`;
             const docRef = doc(db, 'rankings', docId);
